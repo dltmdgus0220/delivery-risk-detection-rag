@@ -1,0 +1,34 @@
+# DB
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+pgvector==0.3.6
+
+# 환경변수
+python-dotenv==1.0.1
+
+# 데이터 수집
+google-play-scraper==1.2.7
+
+# API 서버
+fastapi==0.115.6
+uvicorn==0.32.1
+
+# Agent SDK
+claude-agent-sdk
+anthropic==0.40.0
+
+# LLM 클라이언트
+openai==1.57.0
+google-generativeai==0.8.3
+
+# 임베딩 (오픈소스 모델)
+sentence-transformers==3.3.1
+
+# RAG
+rank-bm25==0.2.2
+cohere==5.13.0
+
+# 대시보드
+streamlit==1.41.1
+plotly==5.24.1
+pandas==2.2.3
