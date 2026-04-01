@@ -1,0 +1,26 @@
+# 환경변수 (API 키, DB 비밀번호)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 평가 결과 (용량 큰 경우 대비)
+eval_report_*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+*.md
+*.txt
