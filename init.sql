@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS raw_reviews (
     reviewer_name VARCHAR(200),
     review_date DATE,
     rating INT,
+    thumbs_up_count INT,
     review_text TEXT,
     app_version VARCHAR(50),
     collected_at TIMESTAMP DEFAULT NOW()
