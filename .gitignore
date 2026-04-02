@@ -22,6 +22,7 @@ Thumbs.db
 .vscode/
 .idea/
 
+*.csv
 *.md
 *.txt
 !requirements.txt
