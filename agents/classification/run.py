@@ -71,3 +71,28 @@ def get_unclassified_reviews() -> list[dict]:
     logger.info(f"미분류 리뷰: {len(result)}건")
     return result
 
+
+def sample_reviews(n: int = 200) -> list[dict]:
+    """
+    별점 기반 층화 샘플링으로 n건 추출.
+    evaluate.py에서 모델 비교용으로 사용.
+    """
+    result: list[dict] = []
+    per_rating = n // 5
+
+    with engine.connect() as conn:
+        for rating in range(1, 6):
+            rows = conn.execute(text("""
+                SELECT p.raw_review_id, p.cleaned_text
+                FROM processed_reviews p
+                JOIN raw_reviews r ON p.raw_review_id = r.id
+                WHERE r.rating = :rating
+                ORDER BY RANDOM()
+                LIMIT :limit
+            """), {"rating": rating, "limit": per_rating}).fetchall()
+
+            result.extend({"id": row.raw_review_id, "cleaned_text": row.cleaned_text} for row in rows)
+
+    logger.info(f"샘플링 완료: {len(result)}건")
+    return result
+
