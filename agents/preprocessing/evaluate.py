@@ -147,3 +147,9 @@ def run_evaluation(n_samples: int = 200) -> dict:
         "detail": scores,
     }
 
+
+def save_report(report: dict, path: str = REPORT_PATH):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    logger.info(f"평가 리포트 저장: {path}")
+
