@@ -170,3 +170,26 @@ def classify_batch(
 
     return results
 
+
+def save_classified(results: list[dict], model_name: str) -> int:
+    """분류 결과를 review_labels에 저장."""
+    saved = 0
+    with engine.begin() as conn:
+        for r in results:
+            labels = r["labels"]
+            conn.execute(text("""
+                INSERT INTO review_labels
+                    (raw_review_id, label, is_suggestion, classified_by)
+                VALUES
+                    (:raw_review_id, :label, :is_suggestion, :classified_by)
+            """), {
+                "raw_review_id": r["id"],
+                "label": labels.get("label", "complaint"),
+                "is_suggestion": labels.get("is_suggestion", False),
+                "classified_by": model_name,
+            })
+            saved += 1
+
+    logger.info(f"저장 완료: {saved}건 (모델: {model_name})")
+    return saved
+
