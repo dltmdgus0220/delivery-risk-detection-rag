@@ -175,3 +175,12 @@ def print_summary(summary: dict):
     print(f"\n최적 모델: {best}  (종합 점수: {summary[best]['total']})")
     print(f"→ 전체 분류 실행: python -m agents.classification.run --model {best}")
 
+
+def main():
+    report = run_evaluation(n_samples=200)
+    save_report(report)
+    print_summary(report["summary"])
+
+
+if __name__ == "__main__":
+    main()
