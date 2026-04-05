@@ -76,3 +76,19 @@ def sample_reviews(n: int = 200) -> list[dict]:
     logger.info(f"샘플링 완료: {len(result)}건")
     return result
 
+
+def get_unprocessed_reviews() -> list[dict]:
+    """processed_reviews에 없는 raw_reviews 전체 반환."""
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT r.id, r.review_text
+            FROM raw_reviews r
+            LEFT JOIN processed_reviews p ON r.id = p.raw_review_id
+            WHERE p.id IS NULL
+            ORDER BY r.review_date DESC
+        """)).fetchall()
+
+    result = [{"id": row.id, "review_text": row.review_text} for row in rows]
+    logger.info(f"미처리 리뷰: {len(result)}건")
+    return result
+
