@@ -158,3 +158,20 @@ def save_report(report: dict, path: str = REPORT_PATH):
         json.dump(report, f, ensure_ascii=False, indent=2)
     logger.info(f"평가 리포트 저장: {path}")
 
+
+def print_summary(summary: dict):
+    print("\n=== 분류 모델 비교 평가 결과 ===")
+    print(f"{'모델':<35} {'라벨 정확도':>12} {'라벨 완전성':>12} {'오탐 없음':>10} {'종합':>8}")
+    print("-" * 82)
+    for model, s in sorted(summary.items(), key=lambda x: -x[1]["total"]):
+        print(
+            f"{model:<35} "
+            f"{s['label_accuracy']:>12.3f} "
+            f"{s['label_completeness']:>12.3f} "
+            f"{s['no_false_positive']:>10.3f} "
+            f"{s['total']:>8.3f}"
+        )
+    best = max(summary, key=lambda m: summary[m]["total"])
+    print(f"\n최적 모델: {best}  (종합 점수: {summary[best]['total']})")
+    print(f"→ 전체 분류 실행: python -m agents.classification.run --model {best}")
+
