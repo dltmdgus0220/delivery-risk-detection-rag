@@ -131,3 +131,28 @@ def preprocess_one(review_text: str, model_name: str) -> str:
 
     raise ValueError(f"지원하지 않는 모델: {model_name}")
 
+
+def preprocess_batch(
+    reviews: list[dict], model_name: str, delay: float = 0.3
+) -> list[dict]:
+    """
+    리뷰 목록 배치 전처리.
+    실패 시 원문 그대로 유지 (downstream에서 원문으로 처리됨).
+    """
+    results = []
+    total = len(reviews)
+
+    for i, review in enumerate(reviews, 1):
+        try:
+            cleaned = preprocess_one(review["review_text"], model_name)
+            results.append({"id": review["id"], "cleaned_text": cleaned})
+        except Exception as e:
+            logger.error(f"전처리 실패 (id={review['id']}): {e}")
+            results.append({"id": review["id"], "cleaned_text": review["review_text"]})
+
+        if i % 50 == 0:
+            logger.info(f"[{model_name}] {i}/{total}건 처리")
+        time.sleep(delay)
+
+    return results
+
