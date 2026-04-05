@@ -65,3 +65,36 @@ WEIGHTS = {
     "no_false_positive": 0.3,
 }
 
+
+def judge_one(review: str, labels: dict, max_retries: int = 3) -> dict | None:
+    """
+    gemini-2.5-flash-lite로 분류 결과 1건 채점.
+    최대 max_retries회 재시도 후에도 실패하면 None 반환 → 집계에서 제외.
+    """
+    prompt = JUDGE_USER.format(review=review, labels=json.dumps(labels, ensure_ascii=False))
+    model = genai.GenerativeModel(
+        model_name=JUDGE_MODEL,
+        system_instruction=JUDGE_SYSTEM,
+    )
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(temperature=0),
+            )
+            candidate = response.candidates[0]
+            if candidate.finish_reason != 1:
+                raise ValueError(f"finish_reason={candidate.finish_reason}")
+            text = candidate.content.parts[0].text.strip()
+            if text.startswith("```"):
+                text = text.split("```")[1].removeprefix("json")
+            return json.loads(text.strip())
+        except Exception as e:
+            logger.warning(f"Judge 실패 (시도 {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                time.sleep(2 ** attempt)
+
+    logger.error("Judge 최종 실패 — 스킵")
+    return None
+
