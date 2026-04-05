@@ -62,3 +62,31 @@ WEIGHTS = {
     "no_over_processing": 0.2,
 }
 
+
+def judge_llm(original: str, preprocessed: str, max_retries: int = 3) -> dict | None:
+    """
+    gemini-2.0-flash-lite로 전처리 결과 1건 채점.
+    단순 비교·채점 작업이므로 저비용 모델로 충분.
+    최대 max_retries회 재시도 후에도 실패하면 None 반환 → 집계에서 제외.
+    """
+    prompt = JUDGE_USER.format(original=original, preprocessed=preprocessed)
+    model = genai.GenerativeModel(
+        model_name=JUDGE_MODEL,
+        system_instruction=JUDGE_SYSTEM,
+    )
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(temperature=0),
+            )
+            return json.loads(response.text.strip())
+        except Exception as e:
+            logger.warning(f"Judge 실패 (시도 {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                time.sleep(2 ** attempt)  # 2초, 4초 대기 후 재시도
+
+    logger.error("Judge 최종 실패 — 스킵")
+    return None
+
