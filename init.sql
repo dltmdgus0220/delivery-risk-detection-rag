@@ -30,14 +30,12 @@ CREATE TABLE IF NOT EXISTS processed_reviews (
 );
 -- 외래키. raw_reviews 테이블의 id를 참조. ON DELETE CASCADE는 raw_reviews 테이블의 데이터가 삭제되면 이 테이블의 데이터도 삭제됨.
 
--- 분류 결과 (멀티 라벨)
+-- 분류 결과
 CREATE TABLE IF NOT EXISTS review_labels (
     id SERIAL PRIMARY KEY,
     raw_review_id INT REFERENCES raw_reviews(id) ON DELETE CASCADE,
-    is_churn BOOLEAN DEFAULT FALSE,
-    is_complaint BOOLEAN DEFAULT FALSE,
+    label VARCHAR(20) CHECK (label IN ('churn', 'complaint', 'positive')),
     is_suggestion BOOLEAN DEFAULT FALSE,
-    is_positive BOOLEAN DEFAULT FALSE,
     classified_by VARCHAR(50),
     human_reviewed BOOLEAN DEFAULT FALSE,
     reviewed_at TIMESTAMP
