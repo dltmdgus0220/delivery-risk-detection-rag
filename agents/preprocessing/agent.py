@@ -92,3 +92,42 @@ def get_unprocessed_reviews() -> list[dict]:
     logger.info(f"미처리 리뷰: {len(result)}건")
     return result
 
+
+def preprocess_one(review_text: str, model_name: str) -> str:
+    """LLM 1종으로 리뷰 1건 전처리."""
+    user_msg = f"리뷰: {review_text}"
+
+    if model_name == "gpt-4o-mini":
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": PREPROCESS_SYSTEM},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0,
+            max_tokens=500,
+        )
+        return response.choices[0].message.content.strip()
+
+    if model_name == "claude-haiku-4-5-20251001":
+        response = anthropic_client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=500,
+            system=PREPROCESS_SYSTEM,
+            messages=[{"role": "user", "content": user_msg}],
+        )
+        return response.content[0].text.strip()
+
+    if model_name == "gemini-2.0-flash":
+        model = genai.GenerativeModel(
+            model_name="gemini-2.0-flash",
+            system_instruction=PREPROCESS_SYSTEM,
+        )
+        response = model.generate_content(
+            user_msg,
+            generation_config=genai.GenerationConfig(temperature=0),
+        )
+        return response.text.strip()
+
+    raise ValueError(f"지원하지 않는 모델: {model_name}")
+
