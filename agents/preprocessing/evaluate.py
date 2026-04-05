@@ -14,7 +14,7 @@ import logging
 import os
 import time
 
-import openai
+import google.generativeai as genai
 from dotenv import load_dotenv
 
 from agents.preprocessing.agent import preprocess_batch, sample_reviews
