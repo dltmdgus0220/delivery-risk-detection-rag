@@ -23,8 +23,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_raw_reviews_unique
 -- 전처리된 리뷰
 CREATE TABLE IF NOT EXISTS processed_reviews (
     id SERIAL PRIMARY KEY,
-    raw_review_id INT REFERENCES raw_reviews(id) ON DELETE CASCADE, 
+    raw_review_id INT REFERENCES raw_reviews(id) ON DELETE CASCADE,
     cleaned_text TEXT,
+    processed_by VARCHAR(50),
     processed_at TIMESTAMP DEFAULT NOW()
 );
 -- 외래키. raw_reviews 테이블의 id를 참조. ON DELETE CASCADE는 raw_reviews 테이블의 데이터가 삭제되면 이 테이블의 데이터도 삭제됨.
