@@ -129,3 +129,35 @@ def parse_args():
     parser.add_argument("--csv-path", default="reviews.csv", help="CSV 저장 경로 (기본값: reviews.csv)")
     return parser.parse_args()
 
+
+def main():
+    args = parse_args()
+
+    if args.date:
+        start_date = end_date = args.date
+    elif args.start and args.end:
+        start_date, end_date = args.start, args.end
+    else:
+        start_date, end_date = get_yesterday_range()
+
+    count_label = f"최대 {args.count}건" if args.count else "전체"
+    logger.info(f"수집 범위: {start_date} ~ {end_date}, {count_label}")
+
+    collected = collect(
+        app_id=BAEMIN_APP_ID,
+        platform=PLATFORM,
+        start_date=start_date,
+        end_date=end_date,
+        count=args.count,
+    )
+    logger.info(f"{len(collected)}건 수집")
+
+    if args.output == "csv":
+        save_to_csv(collected, args.csv_path)
+    else:
+        saved = save_to_db(collected)
+        logger.info(f"{saved}건 저장 (중복 제외)")
+
+
+if __name__ == "__main__":
+    main()
