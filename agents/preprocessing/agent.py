@@ -156,3 +156,22 @@ def preprocess_batch(
 
     return results
 
+
+def save_processed(results: list[dict], model_name: str) -> int:
+    """전처리 결과를 processed_reviews에 저장."""
+    saved = 0
+    with engine.begin() as conn:
+        for r in results:
+            conn.execute(text("""
+                INSERT INTO processed_reviews (raw_review_id, cleaned_text, processed_by)
+                VALUES (:raw_review_id, :cleaned_text, :processed_by)
+            """), {
+                "raw_review_id": r["id"],
+                "cleaned_text": r["cleaned_text"],
+                "processed_by": model_name,
+            })
+            saved += 1
+
+    logger.info(f"저장 완료: {saved}건 (모델: {model_name})")
+    return saved
+
