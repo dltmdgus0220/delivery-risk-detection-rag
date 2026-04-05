@@ -118,3 +118,14 @@ def save_to_csv(reviews: list[dict], path: str):
 
     logger.info(f"CSV 저장 완료: {path} ({len(reviews)}건)")
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="배달의민족 리뷰 수동 수집")
+    parser.add_argument("--date", type=date.fromisoformat, help="수집할 날짜 (YYYY-MM-DD)")
+    parser.add_argument("--start", type=date.fromisoformat, help="수집 시작일 (YYYY-MM-DD)")
+    parser.add_argument("--end", type=date.fromisoformat, help="수집 종료일 (YYYY-MM-DD)")
+    parser.add_argument("--count", type=int, default=None, help="최대 수집 건수 (기본값: 기간 내 전체)")
+    parser.add_argument("--output", choices=["db", "csv"], default="db", help="저장 방식 (기본값: db)")
+    parser.add_argument("--csv-path", default="reviews.csv", help="CSV 저장 경로 (기본값: reviews.csv)")
+    return parser.parse_args()
+
