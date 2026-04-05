@@ -20,3 +20,20 @@ import openai
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
+PREPROCESS_SYSTEM = """너는 앱 리뷰 텍스트 전처리 전문가야.
+주어진 리뷰에서 노이즈를 제거하고 핵심 내용만 남겨줘.
+
+[제거 대상]
+- 반복 한글 자음: ㅋㅋㅋ, ㅎㅎㅎ, ㅠㅠㅠ, ㅜㅜ 등
+- 이모지/이모티콘: 😊 ❤️ ^^ :) 등
+- 과도한 반복 특수문자: !!!! → !, .... → .
+- URL
+
+[절대 금지]
+- 원문 내용 추가나 변경
+- 맞춤법·띄어쓰기 수정
+- 문장 재구성
+
+[중요]
+전처리된 텍스트만 반환. 설명 문구 절대 금지."""
+
