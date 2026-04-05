@@ -96,3 +96,12 @@ def get_yesterday_range() -> tuple[date, date]:
     yesterday = date.today() - timedelta(days=1)
     return yesterday, yesterday
 
+
+def save_to_db(reviews: list[dict]) -> int:
+    saved = 0
+    with engine.begin() as conn:
+        for review in reviews:
+            result = conn.execute(INSERT_SQL, review)
+            saved += result.rowcount
+    return saved
+
