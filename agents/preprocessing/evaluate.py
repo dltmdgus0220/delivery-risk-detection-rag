@@ -65,7 +65,7 @@ WEIGHTS = {
 
 def judge_llm(original: str, preprocessed: str, max_retries: int = 3) -> dict | None:
     """
-    gemini-2.0-flash-lite-001로 전처리 결과 1건 채점.
+    gemini-2.5-flash-lite로 전처리 결과 1건 채점.
     단순 비교·채점 작업이므로 저비용 모델로 충분.
     최대 max_retries회 재시도 후에도 실패하면 None 반환 → 집계에서 제외.
     """
@@ -81,7 +81,15 @@ def judge_llm(original: str, preprocessed: str, max_retries: int = 3) -> dict | 
                 prompt,
                 generation_config=genai.GenerationConfig(temperature=0),
             )
-            return json.loads(response.text.strip())
+            candidate = response.candidates[0]
+            if candidate.finish_reason != 1: # 1 = STOP (정상), 그 외는 차단/에러
+                raise ValueError(f"finish_reason={candidate.finish_reason}")
+            text = candidate.content.parts[0].text.strip()
+            # ```json ... ``` 형태 대응
+            if text.startswith("```"):
+                text = text.split("```")[1].removeprefix("json")
+            # JSON 파싱 
+            return json.loads(text.strip())
         except Exception as e:
             logger.warning(f"Judge 실패 (시도 {attempt}/{max_retries}): {e}")
             if attempt < max_retries:
