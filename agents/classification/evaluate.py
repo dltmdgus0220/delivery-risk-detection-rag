@@ -20,26 +20,24 @@ from dotenv import load_dotenv
 from agents.classification.run import classify_batch, sample_reviews
 
 JUDGE_SYSTEM = """너는 텍스트 분류 품질 평가 전문가야.
-배달앱 리뷰와 멀티라벨 분류 결과를 보고 아래 3가지를 각 1~5점으로 평가해.
+배달앱 리뷰와 분류 결과를 보고 아래 3가지를 각 1~5점으로 평가해.
 
-[라벨 정의]
-- is_churn: 앱 삭제·이탈 의사가 명시적으로 드러나는 리뷰
-- is_complaint: 서비스·앱·배달에 대한 불만이나 문제 제기
-- is_suggestion: 개선 요청이나 기능 제안
-- is_positive: 긍정적인 경험이나 만족 표현
+[분류 구조]
+- label: 리뷰의 주요 의도 (churn=이탈 의사 / complaint=불만 / positive=긍정)
+- is_suggestion: 개선 제안 포함 여부 (label과 독립적)
 
 [평가 기준]
-1. label_accuracy: 붙은 라벨이 리뷰 내용과 실제로 일치하는가
-   5=모든 라벨이 정확 / 3=일부 오분류 / 1=대부분 틀림
+1. label_accuracy: label이 리뷰의 주요 의도와 일치하는가
+   5=정확 / 3=애매하지만 납득 가능 / 1=명백히 틀림
 
-2. label_completeness: 해당되는 라벨이 빠짐없이 붙었는가
-   5=누락 없음 / 3=일부 누락 / 1=대부분 누락
+2. suggestion_accuracy: is_suggestion이 올바르게 판단됐는가
+   5=정확 / 3=애매 / 1=명백히 틀림
 
-3. no_false_positive: 해당 안 되는 라벨이 잘못 붙지 않았는가
-   5=오탐 없음 / 3=일부 오탐 / 1=오탐 다수
+3. overall_quality: 전체적으로 분류 결과가 리뷰를 잘 표현하는가
+   5=매우 적절 / 3=보통 / 1=부적절
 
 반드시 JSON 형식으로만 응답:
-{"label_accuracy": 점수, "label_completeness": 점수, "no_false_positive": 점수}"""
+{"label_accuracy": 점수, "suggestion_accuracy": 점수, "overall_quality": 점수}"""
 
 JUDGE_USER = """리뷰: {review}
 
@@ -60,9 +58,9 @@ JUDGE_MODEL = "gemini-2.5-flash-lite"
 REPORT_PATH = "eval_report_classification.json"
 
 WEIGHTS = {
-    "label_accuracy": 0.4,
-    "label_completeness": 0.3,
-    "no_false_positive": 0.3,
+    "label_accuracy": 0.5,
+    "suggestion_accuracy": 0.2,
+    "overall_quality": 0.3,
 }
 
 
@@ -161,14 +159,14 @@ def save_report(report: dict, path: str = REPORT_PATH):
 
 def print_summary(summary: dict):
     print("\n=== 분류 모델 비교 평가 결과 ===")
-    print(f"{'모델':<35} {'라벨 정확도':>12} {'라벨 완전성':>12} {'오탐 없음':>10} {'종합':>8}")
+    print(f"{'모델':<35} {'라벨 정확도':>12} {'제안 정확도':>12} {'전체 품질':>10} {'종합':>8}")
     print("-" * 82)
     for model, s in sorted(summary.items(), key=lambda x: -x[1]["total"]):
         print(
             f"{model:<35} "
             f"{s['label_accuracy']:>12.3f} "
-            f"{s['label_completeness']:>12.3f} "
-            f"{s['no_false_positive']:>10.3f} "
+            f"{s['suggestion_accuracy']:>12.3f} "
+            f"{s['overall_quality']:>10.3f} "
             f"{s['total']:>8.3f}"
         )
     best = max(summary, key=lambda m: summary[m]["total"])
