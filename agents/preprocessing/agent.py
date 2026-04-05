@@ -186,3 +186,16 @@ def parse_args():
     )
     return parser.parse_args()
 
+
+def main():
+    args = parse_args()
+    reviews = get_unprocessed_reviews()
+    if not reviews:
+        logger.info("처리할 리뷰가 없습니다.")
+        return
+    results = preprocess_batch(reviews, args.model)
+    save_processed(results, args.model)
+
+
+if __name__ == "__main__":
+    main()
