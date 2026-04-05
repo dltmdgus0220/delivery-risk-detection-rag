@@ -40,3 +40,7 @@ JUDGE_SYSTEM = """너는 텍스트 분류 품질 평가 전문가야.
 
 반드시 JSON 형식으로만 응답:
 {"label_accuracy": 점수, "label_completeness": 점수, "no_false_positive": 점수}"""
+
+JUDGE_USER = """리뷰: {review}
+
+분류 결과: {labels}"""
