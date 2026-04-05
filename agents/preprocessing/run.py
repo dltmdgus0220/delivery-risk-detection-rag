@@ -1,12 +1,12 @@
 """
-전처리 Agent.
+전처리 파이프라인.
 
-평가(evaluate.py)로 최적 모델 선정 후 아래 명령으로 전체 전처리 실행.
+evaluate.py로 최적 모델 선정 후 아래 명령으로 전체 전처리 실행.
 
 사용 예시:
-    python -m agents.preprocessing.agent --model gpt-4o-mini
-    python -m agents.preprocessing.agent --model claude-haiku-4-5-20251001
-    python -m agents.preprocessing.agent --model gemini-2.0-flash
+    python -m agents.preprocessing.run --model gpt-4o-mini
+    python -m agents.preprocessing.run --model claude-haiku-4-5-20251001
+    python -m agents.preprocessing.run --model gemini-2.5-flash
 """
 
 import argparse
@@ -177,7 +177,7 @@ def save_processed(results: list[dict], model_name: str) -> int:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="전처리 Agent — 전체 미처리 리뷰 전처리 후 DB 저장")
+    parser = argparse.ArgumentParser(description="전처리 파이프라인 — 전체 미처리 리뷰 전처리 후 DB 저장")
     parser.add_argument(
         "--model",
         choices=SUPPORTED_MODELS,
