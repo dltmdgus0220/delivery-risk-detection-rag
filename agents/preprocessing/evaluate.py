@@ -1,8 +1,8 @@
 """
 전처리 품질 평가 (LLM judge).
 
-3종 모델(gpt-4o-mini / claude-haiku / gemini-2.0-flash)로 샘플 200건을 전처리한 뒤
-GPT-4o-mini를 judge로 사용해 품질을 비교하고 리포트를 저장한다.
+2종 모델(claude-haiku-4-5-20251001 / gemini-2.0-flash-001)로 샘플 200건을 전처리한 뒤
+gemini-2.0-flash-lite-001을 judge로 사용해 품질을 비교하고 리포트를 저장한다.
 
 사용 예시:
     python -m agents.preprocessing.evaluate
@@ -48,11 +48,10 @@ logger = logging.getLogger(__name__)
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
 EVAL_MODELS = [
-    "gpt-4o-mini",
     "claude-haiku-4-5-20251001",
-    "gemini-2.0-flash",
+    "gemini-2.0-flash-001",
 ]
-JUDGE_MODEL = "gemini-2.0-flash-lite"
+JUDGE_MODEL = "gemini-2.0-flash-lite-001"
 REPORT_PATH = "eval_report_preprocessing.json"
 
 # 종합 점수 가중치
@@ -65,7 +64,7 @@ WEIGHTS = {
 
 def judge_llm(original: str, preprocessed: str, max_retries: int = 3) -> dict | None:
     """
-    gemini-2.0-flash-lite로 전처리 결과 1건 채점.
+    gemini-2.0-flash-lite-001로 전처리 결과 1건 채점.
     단순 비교·채점 작업이므로 저비용 모델로 충분.
     최대 max_retries회 재시도 후에도 실패하면 None 반환 → 집계에서 제외.
     """
@@ -115,7 +114,7 @@ def run_evaluation(n_samples: int = 200) -> dict:
         original = sample["review_text"]
         for model in EVAL_MODELS:
             preprocessed = model_outputs[model][i]["cleaned_text"]
-            score = judge_one(original, preprocessed)
+            score = judge_llm(original, preprocessed)
             scores[model].append(score)
             time.sleep(0.2)  # rate limit 대응
 

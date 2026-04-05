@@ -50,7 +50,7 @@ genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 SUPPORTED_MODELS = [
     "gpt-4o-mini",
     "claude-haiku-4-5-20251001",
-    "gemini-2.0-flash",
+    "gemini-2.0-flash-001",
 ]
 
 
@@ -118,9 +118,9 @@ def preprocess_one(review_text: str, model_name: str) -> str:
         )
         return response.content[0].text.strip()
 
-    if model_name == "gemini-2.0-flash":
+    if model_name == "gemini-2.0-flash-001":
         model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
+            model_name="gemini-2.0-flash-001",
             system_instruction=PREPROCESS_SYSTEM,
         )
         response = model.generate_content(
