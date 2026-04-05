@@ -98,3 +98,57 @@ def judge_one(review: str, labels: dict, max_retries: int = 3) -> dict | None:
     logger.error("Judge 최종 실패 — 스킵")
     return None
 
+
+def run_evaluation(n_samples: int = 200) -> dict:
+    """
+    평가 전체 흐름:
+    1. 층화 샘플링 n건
+    2. 3종 모델로 각각 분류
+    3. LLM judge로 채점
+    4. 모델별 평균 점수 집계
+    """
+    samples = sample_reviews(n_samples)
+
+    model_outputs: dict[str, list[dict]] = {}
+    for model in EVAL_MODELS:
+        logger.info(f"[{model}] 분류 시작 ({len(samples)}건)")
+        model_outputs[model] = classify_batch(samples, model)
+
+    scores: dict[str, list[dict | None]] = {m: [] for m in EVAL_MODELS}
+    total = len(samples)
+
+    for i, sample in enumerate(samples):
+        review = sample["cleaned_text"]
+        for model in EVAL_MODELS:
+            labels = model_outputs[model][i]["labels"]
+            score = judge_one(review, labels)
+            scores[model].append(score)
+            time.sleep(0.2)
+
+        if (i + 1) % 20 == 0:
+            logger.info(f"Judge 진행: {i + 1}/{total}")
+
+    summary = {}
+    for model in EVAL_MODELS:
+        valid = [s for s in scores[model] if s is not None]
+        failed = len(scores[model]) - len(valid)
+        if failed:
+            logger.warning(f"[{model}] Judge 스킵: {failed}건")
+
+        n = len(valid)
+        avg = {
+            k: round(sum(s[k] for s in valid) / n, 3)
+            for k in WEIGHTS
+        }
+        avg["total"] = round(sum(avg[k] * w for k, w in WEIGHTS.items()), 3)
+        avg["failed_count"] = failed
+        summary[model] = avg
+
+    return {
+        "n_samples": n_samples,
+        "judge_model": JUDGE_MODEL,
+        "weights": WEIGHTS,
+        "summary": summary,
+        "detail": scores,
+    }
+
