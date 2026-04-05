@@ -27,3 +27,4 @@ Thumbs.db
 *.txt
 !requirements.txt
 .claude/
+scheduler.py
