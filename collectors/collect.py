@@ -105,3 +105,16 @@ def save_to_db(reviews: list[dict]) -> int:
             saved += result.rowcount
     return saved
 
+
+def save_to_csv(reviews: list[dict], path: str):
+    if not reviews:
+        logger.warning("저장할 데이터가 없습니다.")
+        return
+
+    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=reviews[0].keys())
+        writer.writeheader()
+        writer.writerows(reviews)
+
+    logger.info(f"CSV 저장 완료: {path} ({len(reviews)}건)")
+
