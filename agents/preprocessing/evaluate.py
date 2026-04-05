@@ -153,3 +153,20 @@ def save_report(report: dict, path: str = REPORT_PATH):
         json.dump(report, f, ensure_ascii=False, indent=2)
     logger.info(f"평가 리포트 저장: {path}")
 
+
+def print_summary(summary: dict):
+    print("\n=== 전처리 모델 비교 평가 결과 ===")
+    print(f"{'모델':<35} {'노이즈 제거':>10} {'의미 보존':>10} {'과도 처리 없음':>14} {'종합':>8}")
+    print("-" * 80)
+    for model, s in sorted(summary.items(), key=lambda x: -x[1]["total"]):
+        print(
+            f"{model:<35} "
+            f"{s['noise_removal']:>10.3f} "
+            f"{s['meaning_preserved']:>10.3f} "
+            f"{s['no_over_processing']:>14.3f} "
+            f"{s['total']:>8.3f}"
+        )
+    best = max(summary, key=lambda m: summary[m]["total"])
+    print(f"\n최적 모델: {best}  (종합 점수: {summary[best]['total']})")
+    print(f"→ 전체 전처리 실행: python -m agents.preprocessing.agent --model {best}")
+
