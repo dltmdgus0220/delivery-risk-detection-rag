@@ -37,3 +37,57 @@ INSERT_SQL = text("""
     ON CONFLICT (app_id, reviewer_name, review_date, review_text) DO NOTHING
 """)
 
+
+def collect(app_id: str, platform: str, start_date: date, end_date: date, count: int = None) -> list[dict]:
+    """
+    Google Play에서 리뷰를 수집.
+    google-play-scraper는 날짜 필터를 지원하지 않으므로
+    최신순으로 배치 수집하며 start_date보다 오래된 리뷰가 나오면 중단한다.
+
+    count=None(기본값): 기간 내 전체 수집
+    count=N: 최대 N건으로 제한
+    """
+    filtered = []
+    token = None
+
+    while True:
+        batch, token = reviews(
+            app_id,
+            lang="ko",
+            country="kr",
+            sort=Sort.NEWEST,
+            count=BATCH_SIZE,
+            continuation_token=token,
+        )
+
+        if not batch:
+            break
+
+        for r in batch:
+            review_date = r["at"].date()
+
+            if review_date > end_date:
+                continue
+
+            if review_date < start_date:
+                return filtered
+
+            filtered.append({
+                "app_id": app_id,
+                "platform": platform,
+                "reviewer_name": r["userName"],
+                "review_date": review_date,
+                "rating": r["score"],
+                "thumbs_up_count": r["thumbsUpCount"],
+                "review_text": r["content"],
+                "app_version": r.get("appVersion", None),
+            })
+
+            if count and len(filtered) >= count:
+                return filtered
+
+        if not token:
+            break
+
+    return filtered
+
