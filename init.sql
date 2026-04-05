@@ -44,4 +44,5 @@ CREATE TABLE IF NOT EXISTS review_labels (
 -- 조회 성능을 위한 인덱스
 CREATE INDEX IF NOT EXISTS idx_raw_reviews_date ON raw_reviews (review_date); -- 날짜 조건 검색을 위한 인덱스
 CREATE INDEX IF NOT EXISTS idx_review_labels_reviewed ON review_labels (human_reviewed); -- 검토 조건 검색을 위한 인덱스
+CREATE INDEX IF NOT EXISTS idx_review_labels_label ON review_labels (label); -- HITL에서 label IS NULL 조회용
 -- 인덱스가 많으면 쓰기 작업이 느려질 수 있지만 전체 데이터 중에 일부인 데이터를 찾기에는 좋음. 예를 들어 human_reviewed가 true인 데이터를 찾기에는 좋음.
