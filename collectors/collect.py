@@ -16,3 +16,15 @@ from datetime import date, timedelta
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from google_play_scraper import reviews, Sort
+
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO) # DEBUG < INFO < WARNING < ERROR < CRITICAL. 즉 DEBUG를 제외한 나머지 로그만 출력.
+logger = logging.getLogger(__name__)
+
+BAEMIN_APP_ID = "com.sampleapp"
+PLATFORM = "google_play"
+BATCH_SIZE = 200
+
+engine = create_engine(os.environ["DATABASE_URL"]) # DB 연결 통로
+
