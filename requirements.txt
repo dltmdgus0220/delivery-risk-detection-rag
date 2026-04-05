@@ -15,10 +15,10 @@ uvicorn==0.32.1
 
 # Agent SDK
 claude-agent-sdk
-anthropic==0.40.0
+anthropic==0.89.0
 
 # LLM 클라이언트
-openai==1.57.0
+openai==2.30.0
 google-generativeai==0.8.3
 
 # 임베딩 (오픈소스 모델)
