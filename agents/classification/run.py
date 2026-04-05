@@ -55,3 +55,19 @@ SUPPORTED_MODELS = [
     "gemini-2.5-flash",
 ]
 
+
+def get_unclassified_reviews() -> list[dict]:
+    """review_labels에 없는 processed_reviews 전체 반환."""
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT p.raw_review_id, p.cleaned_text
+            FROM processed_reviews p
+            LEFT JOIN review_labels l ON p.raw_review_id = l.raw_review_id
+            WHERE l.id IS NULL
+            ORDER BY p.raw_review_id DESC
+        """)).fetchall()
+
+    result = [{"id": row.raw_review_id, "cleaned_text": row.cleaned_text} for row in rows]
+    logger.info(f"미분류 리뷰: {len(result)}건")
+    return result
+
