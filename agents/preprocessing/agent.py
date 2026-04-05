@@ -53,3 +53,26 @@ SUPPORTED_MODELS = [
     "gemini-2.0-flash",
 ]
 
+
+def sample_reviews(n: int = 200) -> list[dict]:
+    """
+    별점 기반 층화 샘플링으로 n건 추출.
+    별점 1~5에서 각 n//5건씩 랜덤 추출 → 별점 분포 유지.
+    """
+    result: list[dict] = []
+    per_rating = n // 5
+
+    with engine.connect() as conn:
+        for rating in range(1, 6):
+            rows = conn.execute(text("""
+                SELECT id, review_text FROM raw_reviews
+                WHERE rating = :rating
+                ORDER BY RANDOM()
+                LIMIT :limit
+            """), {"rating": rating, "limit": per_rating}).fetchall()
+
+            result.extend({"id": row.id, "review_text": row.review_text} for row in rows)
+
+    logger.info(f"샘플링 완료: {len(result)}건")
+    return result
+
