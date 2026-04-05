@@ -91,3 +91,8 @@ def collect(app_id: str, platform: str, start_date: date, end_date: date, count:
 
     return filtered
 
+
+def get_yesterday_range() -> tuple[date, date]:
+    yesterday = date.today() - timedelta(days=1)
+    return yesterday, yesterday
+
