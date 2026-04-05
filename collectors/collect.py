@@ -28,3 +28,12 @@ BATCH_SIZE = 200
 
 engine = create_engine(os.environ["DATABASE_URL"]) # DB 연결 통로
 
+
+INSERT_SQL = text("""
+    INSERT INTO raw_reviews
+        (app_id, platform, reviewer_name, review_date, rating, thumbs_up_count, review_text, app_version)
+    VALUES
+        (:app_id, :platform, :reviewer_name, :review_date, :rating, :thumbs_up_count, :review_text, :app_version)
+    ON CONFLICT (app_id, reviewer_name, review_date, review_text) DO NOTHING
+""")
+
