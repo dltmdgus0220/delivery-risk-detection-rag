@@ -39,3 +39,19 @@ CLASSIFY_SYSTEM = """너는 배달앱 리뷰 분류 전문가야.
 - 반드시 JSON 형식으로만 응답:
 {"label": "churn|complaint|positive", "is_suggestion": bool}"""
 
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+engine = create_engine(os.environ["DATABASE_URL"])
+
+openai_client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+SUPPORTED_MODELS = [
+    "gpt-4o-mini",
+    "claude-haiku-4-5-20251001",
+    "gemini-2.5-flash",
+]
+
