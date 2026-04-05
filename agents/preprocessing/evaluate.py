@@ -17,7 +17,7 @@ import time
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-from agents.preprocessing.agent import preprocess_batch, sample_reviews
+from agents.preprocessing.run import preprocess_batch, sample_reviews
 
 
 JUDGE_SYSTEM = """너는 텍스트 전처리 품질 평가 전문가야.
@@ -176,7 +176,7 @@ def print_summary(summary: dict):
         )
     best = max(summary, key=lambda m: summary[m]["total"])
     print(f"\n최적 모델: {best}  (종합 점수: {summary[best]['total']})")
-    print(f"→ 전체 전처리 실행: python -m agents.preprocessing.agent --model {best}")
+    print(f"→ 전체 전처리 실행: python -m agents.preprocessing.run --model {best}")
 
 
 def main():
