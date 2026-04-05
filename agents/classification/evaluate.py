@@ -44,3 +44,24 @@ JUDGE_SYSTEM = """너는 텍스트 분류 품질 평가 전문가야.
 JUDGE_USER = """리뷰: {review}
 
 분류 결과: {labels}"""
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+EVAL_MODELS = [
+    "gpt-4o-mini",
+    "claude-haiku-4-5-20251001",
+    "gemini-2.5-flash",
+]
+JUDGE_MODEL = "gemini-2.5-flash-lite"
+REPORT_PATH = "eval_report_classification.json"
+
+WEIGHTS = {
+    "label_accuracy": 0.4,
+    "label_completeness": 0.3,
+    "no_false_positive": 0.3,
+}
+
