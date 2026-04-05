@@ -96,3 +96,49 @@ def sample_reviews(n: int = 200) -> list[dict]:
     logger.info(f"샘플링 완료: {len(result)}건")
     return result
 
+
+def classify_one(cleaned_text: str, model_name: str) -> dict:
+    """LLM 1종으로 리뷰 1건 분류. JSON 파싱 실패 시 예외 발생."""
+    user_msg = f"리뷰: {cleaned_text}"
+
+    if model_name == "gpt-4o-mini":
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": CLASSIFY_SYSTEM},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0,
+            max_tokens=100,
+            response_format={"type": "json_object"},
+        )
+        return json.loads(response.choices[0].message.content)
+
+    if model_name == "claude-haiku-4-5-20251001":
+        response = anthropic_client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=100,
+            system=CLASSIFY_SYSTEM,
+            messages=[{"role": "user", "content": user_msg}],
+        )
+        return json.loads(response.content[0].text.strip())
+
+    if model_name == "gemini-2.5-flash":
+        model = genai.GenerativeModel(
+            model_name="gemini-2.5-flash",
+            system_instruction=CLASSIFY_SYSTEM,
+        )
+        response = model.generate_content(
+            user_msg,
+            generation_config=genai.GenerationConfig(temperature=0),
+        )
+        candidate = response.candidates[0]
+        if candidate.finish_reason != 1:
+            raise ValueError(f"finish_reason={candidate.finish_reason}")
+        text = candidate.content.parts[0].text.strip()
+        if text.startswith("```"):
+            text = text.split("```")[1].removeprefix("json")
+        return json.loads(text.strip())
+
+    raise ValueError(f"지원하지 않는 모델: {model_name}")
+
