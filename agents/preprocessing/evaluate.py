@@ -40,3 +40,25 @@ JUDGE_USER = """원문: {original}
 
 전처리 결과: {preprocessed}"""
 
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+EVAL_MODELS = [
+    "gpt-4o-mini",
+    "claude-haiku-4-5-20251001",
+    "gemini-2.0-flash",
+]
+JUDGE_MODEL = "gemini-2.0-flash-lite"
+REPORT_PATH = "eval_report_preprocessing.json"
+
+# 종합 점수 가중치
+WEIGHTS = {
+    "noise_removal": 0.4,
+    "meaning_preserved": 0.4,
+    "no_over_processing": 0.2,
+}
+
