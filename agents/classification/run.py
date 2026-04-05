@@ -142,3 +142,31 @@ def classify_one(cleaned_text: str, model_name: str) -> dict:
 
     raise ValueError(f"지원하지 않는 모델: {model_name}")
 
+
+def classify_batch(
+    reviews: list[dict], model_name: str, delay: float = 0.3
+) -> list[dict]:
+    """
+    리뷰 목록 배치 분류.
+    실패 시 모든 라벨 False로 fallback.
+    """
+    results = []
+    total = len(reviews)
+
+    for i, review in enumerate(reviews, 1):
+        try:
+            labels = classify_one(review["cleaned_text"], model_name)
+            results.append({"id": review["id"], "labels": labels})
+        except Exception as e:
+            logger.error(f"분류 실패 — HITL 대기 (id={review['id']}): {e}")
+            results.append({"id": review["id"], "labels": {
+                "label": None,
+                "is_suggestion": None,
+            }})
+
+        if i % 50 == 0:
+            logger.info(f"[{model_name}] {i}/{total}건 처리")
+        time.sleep(delay)
+
+    return results
+
