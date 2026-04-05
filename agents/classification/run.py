@@ -193,3 +193,14 @@ def save_classified(results: list[dict], model_name: str) -> int:
     logger.info(f"저장 완료: {saved}건 (모델: {model_name})")
     return saved
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="분류 파이프라인 — 전체 미분류 리뷰 분류 후 DB 저장")
+    parser.add_argument(
+        "--model",
+        choices=SUPPORTED_MODELS,
+        default="gpt-4o-mini",
+        help="분류 모델 (기본값: gpt-4o-mini)",
+    )
+    return parser.parse_args()
+
