@@ -37,3 +37,19 @@ PREPROCESS_SYSTEM = """너는 앱 리뷰 텍스트 전처리 전문가야.
 [중요]
 전처리된 텍스트만 반환. 설명 문구 절대 금지."""
 
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+engine = create_engine(os.environ["DATABASE_URL"])
+
+openai_client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+SUPPORTED_MODELS = [
+    "gpt-4o-mini",
+    "claude-haiku-4-5-20251001",
+    "gemini-2.0-flash",
+]
+
