@@ -48,10 +48,11 @@ logger = logging.getLogger(__name__)
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
 EVAL_MODELS = [
+    "gpt-4o-mini",
     "claude-haiku-4-5-20251001",
-    "gemini-2.0-flash-001",
+    "gemini-2.5-flash",
 ]
-JUDGE_MODEL = "gemini-2.0-flash-lite-001"
+JUDGE_MODEL = "gemini-2.5-flash-lite"
 REPORT_PATH = "eval_report_preprocessing.json"
 
 # 종합 점수 가중치
