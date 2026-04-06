@@ -272,3 +272,9 @@ def _save_to_db(summary: dict[str, dict]):
             })
     logger.info("embedding_eval_results 저장 완료")
 
+
+def save_report(report: dict, path: str = REPORT_PATH):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    logger.info(f"평가 리포트 저장: {path}")
+
