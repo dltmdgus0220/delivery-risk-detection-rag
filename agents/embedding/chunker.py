@@ -17,3 +17,25 @@ import openai
 from dotenv import load_dotenv
 
 from config import CHUNKER_MODE
+
+load_dotenv()
+logger = logging.getLogger(__name__)
+
+openai_client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+ASPECT_SYSTEM = """너는 배달앱 리뷰 분석 전문가야.
+주어진 리뷰를 읽고 아래 5가지 측면(aspect) 중 언급된 내용을 각각 짧은 문장으로 추출해줘.
+
+[측면]
+- 배달속도: 배달 시간, 지연, 빠름/느림
+- 음식품질: 맛, 온도, 신선도, 포장 상태
+- 앱UX: 앱 사용성, 오류, UI, 기능
+- 가격: 배달비, 할인, 최소주문금액, 적립금
+- CS: 고객센터, 환불, 응대, 처리
+
+[규칙]
+- 언급된 측면만 추출 (없는 측면은 생략)
+- 원문 의미를 바꾸지 말고 간결하게 표현
+- 반드시 JSON 배열로만 응답: ["문장1", "문장2", ...]
+- 측면이 하나도 없으면 원문 그대로 배열에 담아 반환"""
+
