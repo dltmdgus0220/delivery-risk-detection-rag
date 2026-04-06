@@ -18,3 +18,10 @@ from sqlalchemy import create_engine, text
 
 from agents.embedding.chunker import chunk_review
 from agents.embedding.embedder import MODEL_DIM, SUPPORTED_MODELS, embed
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+engine = create_engine(os.environ["DATABASE_URL"])
+
