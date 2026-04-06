@@ -59,3 +59,33 @@ EVAL_QUERIES: list[str] = [
     "자주 쓰는 편리한 앱이에요",
 ]
 
+
+# ── 샘플링 ─────────────────────────────────────────────────
+
+def sample_and_chunk(n: int = 200) -> list[dict]:
+    """processed_reviews에서 층화 샘플링 후 청킹."""
+    per_rating = n // 5
+    chunks: list[dict] = []
+
+    with engine.connect() as conn:
+        for rating in range(1, 6):
+            rows = conn.execute(text("""
+                SELECT p.raw_review_id, p.cleaned_text
+                FROM processed_reviews p
+                JOIN raw_reviews r ON p.raw_review_id = r.id
+                WHERE r.rating = :rating
+                ORDER BY RANDOM()
+                LIMIT :limit
+            """), {"rating": rating, "limit": per_rating}).fetchall()
+
+            for row in rows:
+                for idx, chunk_text in enumerate(chunk_review(row.cleaned_text)):
+                    chunks.append({
+                        "raw_review_id": row.raw_review_id,
+                        "chunk_index": idx,
+                        "chunk_text": chunk_text,
+                    })
+
+    logger.info(f"샘플링 완료: {n}건 → 청크 {len(chunks)}개")
+    return chunks
+
