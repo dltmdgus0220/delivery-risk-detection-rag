@@ -240,3 +240,35 @@ def run_evaluation(n_samples: int = 200) -> dict:
         "ground_truth": [{str(k): v for k, v in gt.items()} for gt in ground_truth],
     }
 
+
+# ── DB 저장 ────────────────────────────────────────────────
+
+def _save_to_db(summary: dict[str, dict]):
+    """embedding_eval_results 테이블 생성 후 모델별 집계 결과 저장."""
+    with engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS embedding_eval_results (
+                id             SERIAL PRIMARY KEY,
+                model_name     VARCHAR(100),
+                query          TEXT,
+                mrr_at_10      FLOAT,
+                ndcg_at_10     FLOAT,
+                latency_ms     INT,
+                evaluated_at   TIMESTAMP DEFAULT NOW()
+            )
+        """))
+        for model, s in summary.items():
+            conn.execute(text("""
+                INSERT INTO embedding_eval_results
+                    (model_name, query, mrr_at_10, ndcg_at_10, latency_ms)
+                VALUES
+                    (:model, :query, :mrr, :ndcg, :lat)
+            """), {
+                "model": model,
+                "query": "aggregate",
+                "mrr": s["mrr_at_10"],
+                "ndcg": s["ndcg_at_10"],
+                "lat": s["latency_ms_avg"],
+            })
+    logger.info("embedding_eval_results 저장 완료")
+
