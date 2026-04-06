@@ -289,3 +289,12 @@ def print_summary(summary: dict):
     print(f"\n최적 모델: {best}  (NDCG@10: {summary[best]['ndcg_at_10']}, MRR@10: {summary[best]['mrr_at_10']})")
     print(f"→ 전체 임베딩 실행: python -m agents.embedding.run --model {best}")
 
+
+def main():
+    report = run_evaluation(n_samples=200)
+    save_report(report)
+    print_summary(report["summary"])
+
+
+if __name__ == "__main__":
+    main()
