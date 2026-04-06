@@ -68,3 +68,22 @@ def get_unembedded_reviews() -> list[dict]:
     logger.info(f"임베딩 대상 리뷰: {len(result)}건")
     return result
 
+
+# ── 저장 ───────────────────────────────────────────────────
+
+def save_chunks(raw_review_id: int, chunks: list[str], embeddings, model_name: str):
+    with engine.begin() as conn:
+        for idx, (chunk_text, vec) in enumerate(zip(chunks, embeddings)):
+            conn.execute(text("""
+                INSERT INTO review_chunks
+                    (raw_review_id, chunk_index, chunk_text, embedding, model_name)
+                VALUES
+                    (:raw_review_id, :chunk_index, :chunk_text, :embedding, :model_name)
+            """), {
+                "raw_review_id": raw_review_id,
+                "chunk_index": idx,
+                "chunk_text": chunk_text,
+                "embedding": str(vec.tolist()),
+                "model_name": model_name,
+            })
+
