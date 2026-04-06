@@ -50,3 +50,21 @@ def init_table(model_name: str):
         """))
     logger.info(f"review_chunks 테이블 준비 완료 (vector({dim}))")
 
+
+# ── 데이터 조회 ────────────────────────────────────────────
+
+def get_unembedded_reviews() -> list[dict]:
+    """review_chunks에 없는 processed_reviews 반환."""
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT p.raw_review_id, p.cleaned_text
+            FROM processed_reviews p
+            LEFT JOIN review_chunks c ON p.raw_review_id = c.raw_review_id
+            WHERE c.id IS NULL
+            ORDER BY p.raw_review_id
+        """)).fetchall()
+
+    result = [{"id": row.raw_review_id, "cleaned_text": row.cleaned_text} for row in rows]
+    logger.info(f"임베딩 대상 리뷰: {len(result)}건")
+    return result
+
