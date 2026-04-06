@@ -278,3 +278,14 @@ def save_report(report: dict, path: str = REPORT_PATH):
         json.dump(report, f, ensure_ascii=False, indent=2)
     logger.info(f"평가 리포트 저장: {path}")
 
+
+def print_summary(summary: dict):
+    print("\n=== 임베딩 모델 비교 평가 결과 ===")
+    print(f"{'모델':<45} {'MRR@10':>8} {'NDCG@10':>9} {'지연(ms)':>10}")
+    print("-" * 78)
+    for model, s in sorted(summary.items(), key=lambda x: -x[1]["ndcg_at_10"]):
+        print(f"{model:<45} {s['mrr_at_10']:>8.4f} {s['ndcg_at_10']:>9.4f} {s['latency_ms_avg']:>10}")
+    best = max(summary, key=lambda m: summary[m]["ndcg_at_10"])
+    print(f"\n최적 모델: {best}  (NDCG@10: {summary[best]['ndcg_at_10']}, MRR@10: {summary[best]['mrr_at_10']})")
+    print(f"→ 전체 임베딩 실행: python -m agents.embedding.run --model {best}")
+
