@@ -25,3 +25,28 @@ logger = logging.getLogger(__name__)
 
 engine = create_engine(os.environ["DATABASE_URL"])
 
+
+# ── DB 초기화 ──────────────────────────────────────────────
+
+def init_table(model_name: str):
+    """review_chunks 테이블 생성 (없을 때만). 차원은 모델에 따라 결정."""
+    dim = MODEL_DIM[model_name]
+    with engine.begin() as conn:
+        conn.execute(text(f"""
+            CREATE TABLE IF NOT EXISTS review_chunks (
+                id             SERIAL PRIMARY KEY,
+                raw_review_id  INT REFERENCES raw_reviews(id) ON DELETE CASCADE,
+                chunk_index    INT,
+                chunk_text     TEXT,
+                embedding      vector({dim}),
+                model_name     VARCHAR(100),
+                chunked_at     TIMESTAMP DEFAULT NOW()
+            )
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_review_chunks_embedding
+            ON review_chunks USING hnsw (embedding vector_cosine_ops)
+            WITH (m = 16, ef_construction = 64)
+        """))
+    logger.info(f"review_chunks 테이블 준비 완료 (vector({dim}))")
+
