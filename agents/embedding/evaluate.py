@@ -137,10 +137,21 @@ def cosine_search(query_vec: np.ndarray, doc_vecs: np.ndarray, top_k: int = 10) 
 
 
 # 정답 리뷰가 처음 등장하는 순위의 역수 평균
-# 얼마나 빨리 관련 있는 문서서를 찾았는지
+# 얼마나 빨리 관련 있는 문서를 찾았는지
 def compute_mrr(ranked_indices: list[int], relevant_set: set[int], k: int = 10) -> float:
     for i, idx in enumerate(ranked_indices[:k], 1):
         if idx in relevant_set:
             return 1.0 / i
     return 0.0
+
+
+# NDCG는 관련도가 높은 문서가 얼마나 상위에 잘 배치됐는지를 이상적인 순서와 비교해 평가하는 지표로, 검색 결과의 전체 품질을 측정할 때 사용
+def compute_ndcg(ranked_indices: list[int], relevance: dict[int, int], k: int = 10) -> float:
+    dcg = sum(
+        relevance.get(idx, 0) / math.log2(i + 2)
+        for i, idx in enumerate(ranked_indices[:k])
+    )
+    ideal = sorted(relevance.values(), reverse=True)[:k]
+    idcg = sum(rel / math.log2(i + 2) for i, rel in enumerate(ideal))
+    return dcg / idcg if idcg > 0 else 0.0
 
