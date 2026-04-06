@@ -155,3 +155,88 @@ def compute_ndcg(ranked_indices: list[int], relevance: dict[int, int], k: int = 
     idcg = sum(rel / math.log2(i + 2) for i, rel in enumerate(ideal))
     return dcg / idcg if idcg > 0 else 0.0
 
+
+# ── 평가 메인 ──────────────────────────────────────────────
+
+def run_evaluation(n_samples: int = 200) -> dict:
+    """
+    평가 전체 흐름:
+    1. 층화 샘플링 + 청킹
+    2. 3종 모델로 모든 청크 임베딩
+    3. 20개 쿼리 임베딩 → 각 모델별 top-10 검색
+    4. top-10 union → LLM judge ground truth 생성
+    5. MRR@10, NDCG@10 계산
+    6. embedding_eval_results 저장
+    """
+    chunks = sample_and_chunk(n_samples)
+    chunk_texts = [c["chunk_text"] for c in chunks]
+
+    # 1. 3종 모델 문서 임베딩
+    doc_vecs: dict[str, np.ndarray] = {}
+    for model in EVAL_MODELS:
+        logger.info(f"[{model}] 문서 임베딩 시작 ({len(chunk_texts)}개 청크)")
+        doc_vecs[model] = embed(model, chunk_texts, is_query=False)
+        logger.info(f"[{model}] 완료: shape={doc_vecs[model].shape}")
+
+    # 2. 쿼리 임베딩 + top-10 검색
+    query_results: dict[str, list[list[int]]] = {m: [] for m in EVAL_MODELS}
+    query_latencies: dict[str, list[float]] = {m: [] for m in EVAL_MODELS}
+
+    for q in EVAL_QUERIES:
+        for model in EVAL_MODELS:
+            q_vec = embed(model, [q], is_query=True)[0]
+
+            t0 = time.perf_counter()
+            ranked = cosine_search(q_vec, doc_vecs[model], top_k=10)
+            latency_ms = int((time.perf_counter() - t0) * 1000)
+
+            query_results[model].append(ranked)
+            query_latencies[model].append(latency_ms)
+
+    # 3. Ground truth 생성 (3종 top-10 union → LLM judge)
+    logger.info("Ground truth 생성 시작 (LLM judge)")
+    ground_truth: list[dict[int, int]] = []
+
+    for q_idx, query in enumerate(EVAL_QUERIES):
+        candidate_set: set[int] = set()
+        for model in EVAL_MODELS: # 각 임베딩 모델로부터 나온 문서들을 모두 후보로 사용 (union)
+            candidate_set.update(query_results[model][q_idx])
+
+        relevance: dict[int, int] = {}
+        for chunk_idx in candidate_set:
+            relevance[chunk_idx] = judge_relevance(query, chunk_texts[chunk_idx])
+            time.sleep(0.1)
+
+        ground_truth.append(relevance)
+        logger.info(
+            f"쿼리 [{q_idx+1}/{len(EVAL_QUERIES)}] '{query[:20]}' "
+            f"— 후보 {len(candidate_set)}개 중 관련 {sum(relevance.values())}개"
+        )
+
+    # 4. MRR@10, NDCG@10 계산
+    summary: dict[str, dict] = {}
+    for model in EVAL_MODELS:
+        mrrs, ndcgs = [], []
+        for q_idx in range(len(EVAL_QUERIES)):
+            ranked = query_results[model][q_idx]
+            rel_dict = ground_truth[q_idx]
+            mrrs.append(compute_mrr(ranked, {idx for idx, r in rel_dict.items() if r == 1}))
+            ndcgs.append(compute_ndcg(ranked, rel_dict))
+
+        summary[model] = {
+            "mrr_at_10": round(float(np.mean(mrrs)), 4),
+            "ndcg_at_10": round(float(np.mean(ndcgs)), 4),
+            "latency_ms_avg": int(sum(query_latencies[model]) / len(query_latencies[model])),
+        }
+
+    _save_to_db(summary)
+
+    return {
+        "n_samples": n_samples,
+        "n_chunks": len(chunk_texts),
+        "n_queries": len(EVAL_QUERIES),
+        "summary": summary,
+        "queries": EVAL_QUERIES,
+        "ground_truth": [{str(k): v for k, v in gt.items()} for gt in ground_truth],
+    }
+
