@@ -63,3 +63,9 @@ def embed(model_name: str, texts: list[str], is_query: bool = False) -> np.ndarr
             vectors.extend([d.embedding for d in resp.data])
             time.sleep(0.1)
         vecs = np.array(vectors, dtype=np.float32)
+
+    elif model_name == "BAAI/bge-m3":
+        st = _get_st("BAAI/bge-m3")
+        vecs = st.encode(texts, batch_size=32, show_progress_bar=False, normalize_embeddings=True)
+        vecs = np.array(vecs, dtype=np.float32)
+
