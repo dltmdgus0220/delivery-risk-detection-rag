@@ -13,3 +13,23 @@ import openai
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
+load_dotenv()
+
+openai_client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+SUPPORTED_MODELS = [
+    "text-embedding-3-small",          # OpenAI API, 1536차원
+    "BAAI/bge-m3",                     # HuggingFace, 1024차원
+    "intfloat/multilingual-e5-large",  # HuggingFace, 1024차원
+]
+
+MODEL_DIM = {
+    "text-embedding-3-small": 1536,
+    "BAAI/bge-m3": 1024,
+    "intfloat/multilingual-e5-large": 1024,
+}
+
+# SentenceTransformer 모델 캐시 (배치마다 재로딩 방지)
+# 한 번 로드한 모델은 계속 재사용하기 위함.
+_st_cache: dict[str, SentenceTransformer] = {}
+
