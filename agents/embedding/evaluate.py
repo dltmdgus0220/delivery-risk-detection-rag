@@ -135,3 +135,12 @@ def cosine_search(query_vec: np.ndarray, doc_vecs: np.ndarray, top_k: int = 10) 
     scores = doc_vecs @ query_vec
     return list(np.argsort(scores)[::-1][:top_k])
 
+
+# 정답 리뷰가 처음 등장하는 순위의 역수 평균
+# 얼마나 빨리 관련 있는 문서서를 찾았는지
+def compute_mrr(ranked_indices: list[int], relevant_set: set[int], k: int = 10) -> float:
+    for i, idx in enumerate(ranked_indices[:k], 1):
+        if idx in relevant_set:
+            return 1.0 / i
+    return 0.0
+
