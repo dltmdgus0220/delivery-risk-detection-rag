@@ -121,7 +121,10 @@ def classify_one(cleaned_text: str, model_name: str) -> dict:
             system=CLASSIFY_SYSTEM,
             messages=[{"role": "user", "content": user_msg}],
         )
-        return json.loads(response.content[0].text.strip())
+        text = response.content[0].text.strip()
+        if text.startswith("```"):
+            text = text.split("```")[1].removeprefix("json")
+        return json.loads(text.strip())
 
     if model_name == "gemini-2.5-flash":
         model = genai.GenerativeModel(
