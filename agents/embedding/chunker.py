@@ -93,3 +93,12 @@ def chunk_by_aspect(text: str, max_retries: int = 3) -> list[str]:
     logger.error("Aspect 청킹 최종 실패 — 단일 청크로 fallback")
     return [text.strip()]
 
+
+def chunk_review(text: str) -> list[str]:
+    """
+    파이프라인 진입점.
+    config.CHUNKER_MODE에 따라 chunk() 또는 chunk_by_aspect() 호출.
+    """
+    if CHUNKER_MODE == "aspect":
+        return chunk_by_aspect(text)
+    return chunk(text)
