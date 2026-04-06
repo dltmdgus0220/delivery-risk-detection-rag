@@ -69,3 +69,10 @@ def embed(model_name: str, texts: list[str], is_query: bool = False) -> np.ndarr
         vecs = st.encode(texts, batch_size=32, show_progress_bar=False, normalize_embeddings=True)
         vecs = np.array(vecs, dtype=np.float32)
 
+    elif model_name == "intfloat/multilingual-e5-large":
+        prefix = "query: " if is_query else "passage: " # e5는 query(질문), passage(문서) 인지 구분해서 넣어줘야함.
+        prefixed = [prefix + t for t in texts]
+        st = _get_st("intfloat/multilingual-e5-large")
+        vecs = st.encode(prefixed, batch_size=32, show_progress_bar=False, normalize_embeddings=True)
+        vecs = np.array(vecs, dtype=np.float32)
+
