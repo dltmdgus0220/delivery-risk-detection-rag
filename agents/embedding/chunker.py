@@ -46,3 +46,50 @@ def chunk(text: str) -> list[str]:
         return []
     return [text.strip()]
 
+
+def chunk_by_aspect(text: str, max_retries: int = 3) -> list[str]:
+    """
+    GPT-4o-mini로 배달속도/음식품질/앱UX/가격/CS 단위로 분리.
+    실패 시 단일 청크로 fallback.
+    """
+    if not text or not text.strip():
+        return []
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": ASPECT_SYSTEM},
+                    {"role": "user", "content": f"리뷰: {text.strip()}"},
+                ],
+                temperature=0,
+                max_tokens=300,
+                response_format={"type": "json_object"},
+            )
+            raw = resp.choices[0].message.content.strip()
+            if raw.startswith("```"):
+                raw = raw.split("```")[1].removeprefix("json")
+            parsed = json.loads(raw.strip())
+
+            # {"chunks": [...]} 또는 [...] 형태 모두 대응
+            if isinstance(parsed, list):
+                chunks = parsed
+            else:
+                chunks = next(
+                    (v for v in parsed.values() if isinstance(v, list)), None
+                )
+                if chunks is None:
+                    raise ValueError(f"예상치 못한 응답 형식: {raw}")
+
+            chunks = [c.strip() for c in chunks if isinstance(c, str) and c.strip()]
+            return chunks if chunks else [text.strip()]
+
+        except Exception as e:
+            logger.warning(f"Aspect 청킹 실패 (시도 {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                time.sleep(2 ** attempt)
+
+    logger.error("Aspect 청킹 최종 실패 — 단일 청크로 fallback")
+    return [text.strip()]
+
