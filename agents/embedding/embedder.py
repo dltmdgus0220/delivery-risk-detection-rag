@@ -76,3 +76,10 @@ def embed(model_name: str, texts: list[str], is_query: bool = False) -> np.ndarr
         vecs = st.encode(prefixed, batch_size=32, show_progress_bar=False, normalize_embeddings=True)
         vecs = np.array(vecs, dtype=np.float32)
 
+    else:
+        raise ValueError(f"지원하지 않는 모델: {model_name}")
+
+    # L2 정규화 (코사인 유사도를 내적으로 계산하기 위함)
+    norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+    norms = np.where(norms == 0, 1, norms)
+    return vecs / norms
