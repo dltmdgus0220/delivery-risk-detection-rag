@@ -39,3 +39,27 @@ def _get_st(model_name: str) -> SentenceTransformer:
         _st_cache[model_name] = SentenceTransformer(model_name)
     return _st_cache[model_name]
 
+
+def embed(model_name: str, texts: list[str], is_query: bool = False) -> np.ndarray:
+    """
+    텍스트 리스트를 임베딩 벡터(np.ndarray)로 변환.
+
+    Args:
+        model_name : SUPPORTED_MODELS 중 하나
+        texts      : 임베딩할 텍스트 리스트
+        is_query   : True면 쿼리용 접두어 적용 (e5-large 전용)
+
+    Returns:
+        shape (len(texts), dim), float32, L2 정규화 완료
+    """
+    if model_name == "text-embedding-3-small":
+        vectors = []
+        for i in range(0, len(texts), 100):
+            batch = texts[i : i + 100]
+            resp = openai_client.embeddings.create(
+                model="text-embedding-3-small",
+                input=batch,
+            )
+            vectors.extend([d.embedding for d in resp.data])
+            time.sleep(0.1)
+        vecs = np.array(vectors, dtype=np.float32)
