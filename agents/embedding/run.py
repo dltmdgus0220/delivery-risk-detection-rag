@@ -87,3 +87,56 @@ def save_chunks(raw_review_id: int, chunks: list[str], embeddings, model_name: s
                 "model_name": model_name,
             })
 
+
+# ── 메인 파이프라인 ────────────────────────────────────────
+
+def run_pipeline(model_name: str, batch_size: int = 50):
+    """
+    전체 미임베딩 리뷰 처리:
+    1. 청킹
+    2. 배치 임베딩
+    3. review_chunks 저장
+    """
+    init_table(model_name)
+
+    reviews = get_unembedded_reviews()
+    if not reviews:
+        logger.info("처리할 리뷰가 없습니다.")
+        return
+
+    total = len(reviews)
+    saved_chunks = 0
+    batch_texts: list[str] = []
+    batch_meta: list[tuple[int, list[str]]] = []  # (raw_review_id, chunk_list) 나중에 저장할 때 원본 리뷰와 매핑하기 위함.
+
+    for i, review in enumerate(reviews, 1):
+        chunks = chunk_review(review["cleaned_text"])
+        if not chunks:
+            continue
+
+        # batch_texts = [청크A, 청크B, 청크C, 청크D, 청크E] 이런 평탄화된 전체 청크를
+        # batch_meta  = [(리뷰1, [청크A, 청크B]), (리뷰2, [청크C]), (리뷰3, [청크D, 청크E])] 이렇게 리뷰별로 청크 묶음 
+        batch_texts.extend(chunks)
+        batch_meta.append((review["id"], chunks))
+
+        # 배치사이즈만큼 다 채웠거나 마지막 배치면 True
+        flush = len(batch_texts) >= batch_size or i == total
+        if flush and batch_texts:
+            embeddings = embed(model_name, batch_texts)
+
+            cursor = 0
+            # 리뷰별 경계를 복원해서 저장
+            for raw_id, chunk_list in batch_meta:
+                n = len(chunk_list)
+                save_chunks(raw_id, chunk_list, embeddings[cursor : cursor + n], model_name)
+                cursor += n
+                saved_chunks += n
+            # 초기화화
+            batch_texts = []
+            batch_meta = []
+
+        if i % 100 == 0:
+            logger.info(f"[{model_name}] {i}/{total}건 처리 ({saved_chunks}개 청크 저장)")
+
+    logger.info(f"완료: {total}건 리뷰 → {saved_chunks}개 청크 저장 (모델: {model_name})")
+
