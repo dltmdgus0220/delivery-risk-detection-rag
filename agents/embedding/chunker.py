@@ -39,3 +39,10 @@ ASPECT_SYSTEM = """너는 배달앱 리뷰 분석 전문가야.
 - 반드시 JSON 배열로만 응답: ["문장1", "문장2", ...]
 - 측면이 하나도 없으면 원문 그대로 배열에 담아 반환"""
 
+
+def chunk(text: str) -> list[str]:
+    """리뷰 전체를 1개 청크로 반환 (단일 청크 방식)."""
+    if not text or not text.strip():
+        return []
+    return [text.strip()]
+
