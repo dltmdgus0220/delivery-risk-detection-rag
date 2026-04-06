@@ -33,3 +33,9 @@ MODEL_DIM = {
 # 한 번 로드한 모델은 계속 재사용하기 위함.
 _st_cache: dict[str, SentenceTransformer] = {}
 
+
+def _get_st(model_name: str) -> SentenceTransformer:
+    if model_name not in _st_cache:
+        _st_cache[model_name] = SentenceTransformer(model_name)
+    return _st_cache[model_name]
+
