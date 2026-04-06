@@ -89,3 +89,14 @@ def sample_and_chunk(n: int = 200) -> list[dict]:
     logger.info(f"샘플링 완료: {n}건 → 청크 {len(chunks)}개")
     return chunks
 
+
+# ── Ground truth 생성 (LLM judge) ─────────────────────────
+
+JUDGE_SYSTEM = """너는 정보 검색 품질 평가 전문가야.
+주어진 쿼리와 리뷰 청크를 보고, 청크가 쿼리에 답하는 데 관련이 있는지 판단해.
+
+관련 있음(1): 청크 내용이 쿼리 주제와 직접적으로 연관된 경우
+관련 없음(0): 청크 내용이 쿼리와 무관한 경우
+
+반드시 JSON 형식으로만 응답: {"relevant": 0 또는 1}"""
+
