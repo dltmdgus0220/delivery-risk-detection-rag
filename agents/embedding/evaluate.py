@@ -127,3 +127,11 @@ def judge_relevance(query: str, chunk_text: str, max_retries: int = 3) -> int:
 
     return 0
 
+
+# ── 검색 및 지표 계산 ──────────────────────────────────────
+
+def cosine_search(query_vec: np.ndarray, doc_vecs: np.ndarray, top_k: int = 10) -> list[int]:
+    """정규화된 벡터 기준 내적 = 코사인 유사도로 top-k 인덱스 반환."""
+    scores = doc_vecs @ query_vec
+    return list(np.argsort(scores)[::-1][:top_k])
+
