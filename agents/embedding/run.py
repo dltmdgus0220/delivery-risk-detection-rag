@@ -140,3 +140,22 @@ def run_pipeline(model_name: str, batch_size: int = 50):
 
     logger.info(f"완료: {total}건 리뷰 → {saved_chunks}개 청크 저장 (모델: {model_name})")
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="임베딩 파이프라인 — 전체 리뷰 청킹 + 임베딩 후 review_chunks 저장"
+    )
+    parser.add_argument(
+        "--model",
+        choices=SUPPORTED_MODELS,
+        default="BAAI/bge-m3",
+        help="임베딩 모델 (기본값: BAAI/bge-m3)",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=50,
+        help="임베딩 배치 크기 (기본값: 50)",
+    )
+    return parser.parse_args()
+
