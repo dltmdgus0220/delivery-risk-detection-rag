@@ -10,7 +10,6 @@ Ground truth 생성: 3종 모델 top-10 union에 대해 GPT-4o-mini judge로 관
 사용 예시:
     python -m agents.embedding.evaluate
     → eval_report_embedding.json 저장
-    → embedding_eval_results 테이블에 저장
 """
 
 import json
@@ -229,8 +228,6 @@ def run_evaluation(n_samples: int = 200) -> dict:
             "latency_ms_avg": int(sum(query_latencies[model]) / len(query_latencies[model])),
         }
 
-    _save_to_db(summary)
-
     return {
         "n_samples": n_samples,
         "n_chunks": len(chunk_texts),
@@ -239,38 +236,6 @@ def run_evaluation(n_samples: int = 200) -> dict:
         "queries": EVAL_QUERIES,
         "ground_truth": [{str(k): v for k, v in gt.items()} for gt in ground_truth],
     }
-
-
-# ── DB 저장 ────────────────────────────────────────────────
-
-def _save_to_db(summary: dict[str, dict]):
-    """embedding_eval_results 테이블 생성 후 모델별 집계 결과 저장."""
-    with engine.begin() as conn:
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS embedding_eval_results (
-                id             SERIAL PRIMARY KEY,
-                model_name     VARCHAR(100),
-                query          TEXT,
-                mrr_at_10      FLOAT,
-                ndcg_at_10     FLOAT,
-                latency_ms     INT,
-                evaluated_at   TIMESTAMP DEFAULT NOW()
-            )
-        """))
-        for model, s in summary.items():
-            conn.execute(text("""
-                INSERT INTO embedding_eval_results
-                    (model_name, query, mrr_at_10, ndcg_at_10, latency_ms)
-                VALUES
-                    (:model, :query, :mrr, :ndcg, :lat)
-            """), {
-                "model": model,
-                "query": "aggregate",
-                "mrr": s["mrr_at_10"],
-                "ndcg": s["ndcg_at_10"],
-                "lat": s["latency_ms_avg"],
-            })
-    logger.info("embedding_eval_results 저장 완료")
 
 
 def save_report(report: dict, path: str = REPORT_PATH):
