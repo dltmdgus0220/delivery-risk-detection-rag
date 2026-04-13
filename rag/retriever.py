@@ -92,3 +92,16 @@ def _vector_search(query: str, top_k: int = 20) -> list[int]:
     scores = _doc_vecs_cache @ q_vec
     return list(np.argsort(scores)[::-1][:top_k])
 
+
+def _bm25_search(query: str, top_k: int = 20) -> list[int]:
+    """BM25 키워드 검색으로 top-k 인덱스 반환."""
+    global _bm25_cache
+    if _bm25_cache is None:
+        _load_chunks()
+        tokenized = [c["chunk_text"].split() for c in _chunks_cache]
+        _bm25_cache = BM25Okapi(tokenized)
+        logger.info("BM25 인덱스 구성 완료")
+
+    scores = _bm25_cache.get_scores(query.split())
+    return list(np.argsort(scores)[::-1][:top_k])
+
