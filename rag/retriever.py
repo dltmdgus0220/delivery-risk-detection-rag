@@ -74,3 +74,13 @@ def _load_chunks() -> list[dict]:
     logger.info(f"review_chunks 로드 완료: {len(_chunks_cache)}개")
     return _chunks_cache
 
+
+# ── 검색 ────────────────────────────────────────────────────
+
+def _vector_search(query: str, top_k: int = 20) -> list[int]:
+    """쿼리 임베딩과 문서 임베딩의 코사인 유사도(내적)로 top-k 인덱스 반환."""
+    _load_chunks()
+    q_vec = embed(EMBEDDING_MODEL, [query], is_query=True)[0]
+    scores = _doc_vecs_cache @ q_vec
+    return list(np.argsort(scores)[::-1][:top_k])
+
