@@ -46,3 +46,17 @@ def _get_cross_encoder_ko():
         logger.info("Cross-encoder (한국어) 모델 로드 완료")
     return _ce_ko_cache
 
+
+def _rerank_cross_encoder(query: str, candidates: list[dict], top_n: int, ko: bool = False) -> list[dict]:
+    """
+    Cross-encoder로 (query, chunk) 쌍 직접 스코어링.
+    쿼리와 문서를 함께 입력해 관련성을 직접 계산 → bi-encoder보다 정확.
+
+    ko=True: 한국어 특화 모델(bongsoo) 사용
+    """
+    ce = _get_cross_encoder_ko() if ko else _get_cross_encoder()
+    pairs = [(query, c["chunk_text"]) for c in candidates] # (쿼리, 문서) 쌍 
+    scores = ce.predict(pairs)
+    ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)
+    return [c for c, _ in ranked[:top_n]]
+
