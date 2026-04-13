@@ -194,3 +194,22 @@ def save_report(report: dict, path: str = REPORT_PATH):
         json.dump(report, f, ensure_ascii=False, indent=2)
     logger.info(f"평가 리포트 저장: {path}")
 
+
+def print_summary(summary: dict):
+    print("\n=== 리랭커 비교 평가 결과 ===")
+    print(f"{'리랭커':<20} {'MRR@5':>8} {'NDCG@5':>8} {'P50(ms)':>10} {'P95(ms)':>10}")
+    print("-" * 62)
+    for name, s in sorted(summary.items(), key=lambda x: -x[1]["ndcg_at_5"]):
+        print(f"{name:<20} {s['mrr_at_5']:>8.4f} {s['ndcg_at_5']:>8.4f} {s['latency_p50_ms']:>10.1f} {s['latency_p95_ms']:>10.1f}")
+
+    best = max(summary, key=lambda m: summary[m]["ndcg_at_5"])
+    scores = [summary[m]["ndcg_at_5"] for m in summary]
+    diff = max(scores) - min(scores)
+
+    print(f"\nNDCG@5 최고: {best} ({summary[best]['ndcg_at_5']})")
+    if diff < 0.05:
+        fastest = min(summary, key=lambda m: summary[m]["latency_p50_ms"])
+        print(f"→ NDCG@5 차이 {diff:.4f} < 0.05 → 속도 우선: {fastest} 선택 권장")
+    else:
+        print(f"→ NDCG@5 차이 {diff:.4f} ≥ 0.05 → 성능 우선: {best} 선택 권장")
+
