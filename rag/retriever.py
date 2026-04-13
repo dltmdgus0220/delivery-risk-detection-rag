@@ -19,3 +19,12 @@ from rank_bm25 import BM25Okapi
 from sqlalchemy import create_engine, text
 
 from agents.embedding.embedder import embed
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+engine = create_engine(os.environ["DATABASE_URL"])
+
+EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
+
