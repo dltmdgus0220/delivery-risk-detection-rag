@@ -46,3 +46,31 @@ def _parse_embedding(raw) -> np.ndarray:
     import ast
     return np.array(ast.literal_eval(str(raw)), dtype=np.float32)
 
+
+def _load_chunks() -> list[dict]:
+    """review_chunks 전체를 메모리에 로드 (id, raw_review_id, chunk_index, chunk_text, embedding)."""
+    global _chunks_cache, _doc_vecs_cache
+    if _chunks_cache is not None:
+        return _chunks_cache
+
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT id, raw_review_id, chunk_index, chunk_text, embedding
+            FROM review_chunks
+            ORDER BY id
+        """)).fetchall()
+
+    _chunks_cache = [
+        {
+            "id": row.id,
+            "raw_review_id": row.raw_review_id,
+            "chunk_index": row.chunk_index,
+            "chunk_text": row.chunk_text,
+            "embedding": _parse_embedding(row.embedding),
+        }
+        for row in rows
+    ]
+    _doc_vecs_cache = np.stack([c["embedding"] for c in _chunks_cache])
+    logger.info(f"review_chunks 로드 완료: {len(_chunks_cache)}개")
+    return _chunks_cache
+
