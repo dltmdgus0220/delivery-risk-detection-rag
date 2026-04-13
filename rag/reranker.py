@@ -90,7 +90,7 @@ def _rerank_mmr(query: str, candidates: list[dict], top_n: int, lambda_: float =
         else:
             selected_vecs = doc_vecs[selected_indices]
             mmr_scores = {
-                i: lambda_ * relevance[i] - (1 - lambda_) * float(np.max(doc_vecs[i] @ selected_vecs.T))
+                i: lambda_ * relevance[i] - (1 - lambda_) * float(np.max(doc_vecs[i] @ selected_vecs.T)) # 관련성 - 중복도
                 for i in remaining
             }
             best = max(remaining, key=lambda i: mmr_scores[i])
