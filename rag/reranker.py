@@ -17,9 +17,10 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-SUPPORTED_RERANKERS = ["cross-encoder", "mmr", "cohere"]
+SUPPORTED_RERANKERS = ["cross-encoder", "cross-encoder-ko", "mmr", "cohere"]
 EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
 
 # Cross-encoder 모델 캐시
-_ce_cache = None
+_ce_cache = None       # 영어: cross-encoder/ms-marco-MiniLM-L-6-v2
+_ce_ko_cache = None    # 한국어: bongsoo/mmarco-mMiniLMv2-L12-H384-v1
 
