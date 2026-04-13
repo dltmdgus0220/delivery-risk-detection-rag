@@ -144,3 +144,47 @@ def run_evaluation() -> dict:
         relevant_count = sum(relevance.values())
         logger.info(f"  → 후보 {len(candidates)}개 중 관련 {relevant_count}개")
         ground_truth.append(relevance)
+
+    # 2. 리랭커별 평가
+    summary: dict[str, dict] = {}
+    for reranker_name in EVAL_RERANKERS:
+        mrrs: list[float] = []
+        ndcgs: list[float] = []
+        latencies: list[float] = []
+
+        for q_idx, query in enumerate(EVAL_QUERIES):
+            candidates = query_candidates[q_idx]
+
+            t0 = time.perf_counter()
+            reranked = rerank(reranker_name, query, candidates, top_n=5)
+            latency_ms = (time.perf_counter() - t0) * 1000
+
+            mrrs.append(compute_mrr(reranked, ground_truth[q_idx], k=5))
+            ndcgs.append(compute_ndcg(reranked, ground_truth[q_idx], k=5))
+            latencies.append(latency_ms)
+
+        latencies_sorted = sorted(latencies)
+        n = len(latencies_sorted)
+        summary[reranker_name] = {
+            "mrr_at_5": round(float(np.mean(mrrs)), 4),
+            "ndcg_at_5": round(float(np.mean(ndcgs)), 4),
+            "latency_p50_ms": round(latencies_sorted[int(n * 0.5)], 1), # 중앙값
+            "latency_p95_ms": round(latencies_sorted[int(n * 0.95)], 1), # 상위 5% 극단적 케이스의 지연 수준. 서비스 안정성을 판단하기 위함.
+        }
+        logger.info(
+            f"[{reranker_name}] MRR@5={summary[reranker_name]['mrr_at_5']}, "
+            f"NDCG@5={summary[reranker_name]['ndcg_at_5']}, "
+            f"P50={summary[reranker_name]['latency_p50_ms']}ms, "
+            f"P95={summary[reranker_name]['latency_p95_ms']}ms"
+        )
+
+    return {
+        "n_queries": len(EVAL_QUERIES),
+        "top_k_hybrid": 20,
+        "top_n_rerank": 5,
+        "rerankers_evaluated": EVAL_RERANKERS,
+        "summary": summary,
+        "queries": EVAL_QUERIES,
+        "ground_truth": [{str(k): v for k, v in gt.items()} for gt in ground_truth],
+    }
+
