@@ -28,3 +28,8 @@ engine = create_engine(os.environ["DATABASE_URL"])
 
 EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
 
+# 모듈 레벨 캐시 — DB에서 한 번만 로드
+_chunks_cache: list[dict] | None = None
+_bm25_cache: BM25Okapi | None = None
+_doc_vecs_cache: np.ndarray | None = None
+
