@@ -77,6 +77,14 @@ def _load_chunks() -> list[dict]:
 
 # ── 검색 ────────────────────────────────────────────────────
 
+# 이렇게 쿼리를 통해서도 hnsw 인덱스 기반으로 가까운 벡터 조회 가능. 
+# rows = conn.execute(text("""
+#     SELECT id, chunk_text
+#     FROM review_chunks
+#     ORDER BY embedding <-> :query_embedding
+#     LIMIT 5
+# """), {"query_embedding": query_embedding}).fetchall()
+
 def _vector_search(query: str, top_k: int = 20) -> list[int]:
     """쿼리 임베딩과 문서 임베딩의 코사인 유사도(내적)로 top-k 인덱스 반환."""
     _load_chunks()
