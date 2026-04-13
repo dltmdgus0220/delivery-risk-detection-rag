@@ -53,3 +53,40 @@ EVAL_QUERIES: list[str] = [
     "자주 쓰는 편리한 앱이에요",
 ]
 
+
+# ── Ground truth 생성 (LLM judge) ──────────────────────────
+
+JUDGE_SYSTEM = """너는 정보 검색 품질 평가 전문가야.
+주어진 쿼리와 리뷰 청크를 보고, 청크가 쿼리에 답하는 데 관련이 있는지 판단해.
+
+관련 있음(1): 청크 내용이 쿼리 주제와 직접적으로 연관된 경우
+관련 없음(0): 청크 내용이 쿼리와 무관한 경우
+
+반드시 JSON 형식으로만 응답: {"relevant": 0 또는 1}"""
+
+
+def judge_relevance(query: str, chunk_text: str, max_retries: int = 3) -> int:
+    """GPT-4o-mini로 (query, chunk) 관련성 판단. 실패 시 0 반환."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": JUDGE_SYSTEM},
+                    {"role": "user", "content": f"쿼리: {query}\n\n청크: {chunk_text}"},
+                ],
+                temperature=0,
+                max_tokens=20,
+                response_format={"type": "json_object"},
+            )
+            raw = resp.choices[0].message.content.strip()
+            if raw.startswith("```"):
+                raw = raw.split("```")[1].removeprefix("json")
+            result = json.loads(raw.strip())
+            return int(result.get("relevant", 0))
+        except Exception as e:
+            logger.warning(f"Judge 실패 (시도 {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                time.sleep(2 ** attempt)
+    return 0
+
