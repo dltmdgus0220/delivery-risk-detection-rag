@@ -28,6 +28,8 @@ engine = create_engine(os.environ["DATABASE_URL"])
 
 # ── DB 초기화 ──────────────────────────────────────────────
 
+# HNSW 기반 벡터 인덱스를 생성해서 유사도 검색을 빠르게 해줌.
+# HNSW(Hierarchical Navigable Small World): 벡터들을 그래프로 연결해 가까운 것만 따라가며 빠르게 유사한 데이터를 찾는 알고리즘. 
 def init_table(model_name: str):
     """review_chunks 테이블 생성 (없을 때만). 차원은 모델에 따라 결정."""
     dim = MODEL_DIM[model_name]
