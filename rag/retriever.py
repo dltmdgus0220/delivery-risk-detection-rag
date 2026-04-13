@@ -33,3 +33,16 @@ _chunks_cache: list[dict] | None = None
 _bm25_cache: BM25Okapi | None = None
 _doc_vecs_cache: np.ndarray | None = None
 
+
+# ── 청크 로드 ───────────────────────────────────────────────
+
+def _parse_embedding(raw) -> np.ndarray:
+    """pgvector에서 반환된 embedding을 np.ndarray로 변환."""
+    if isinstance(raw, np.ndarray):
+        return raw.astype(np.float32)
+    if isinstance(raw, list):
+        return np.array(raw, dtype=np.float32)
+    # string 형태 "[0.1, 0.2, ...]" 대응
+    import ast
+    return np.array(ast.literal_eval(str(raw)), dtype=np.float32)
+
