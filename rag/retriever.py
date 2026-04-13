@@ -121,3 +121,28 @@ def _rrf(results_a: list[int], results_b: list[int], k: int = 60) -> list[int]:
         scores[idx] = scores.get(idx, 0.0) + 1.0 / (k + rank)
     return sorted(scores, key=lambda x: scores[x], reverse=True)
 
+
+# ── 메인 ────────────────────────────────────────────────────
+
+def hybrid_search(query: str, top_k: int = 20) -> list[dict]:
+    """
+    하이브리드 검색 메인 함수.
+
+    1. 벡터 검색 (코사인 유사도) → top-k
+    2. BM25 키워드 검색 → top-k
+    3. RRF 병합 → 최종 top-k 반환
+
+    Args:
+        query  : 검색 쿼리 (자연어)
+        top_k  : 반환할 청크 수 (기본 20)
+
+    Returns:
+        청크 dict 리스트 (id, raw_review_id, chunk_index, chunk_text, embedding 포함)
+    """
+    _load_chunks()
+
+    vec_results = _vector_search(query, top_k=top_k)
+    bm25_results = _bm25_search(query, top_k=top_k)
+    merged = _rrf(vec_results, bm25_results)[:top_k]
+
+    return [_chunks_cache[i] for i in merged]
