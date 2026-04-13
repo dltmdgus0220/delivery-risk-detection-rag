@@ -105,3 +105,19 @@ def _bm25_search(query: str, top_k: int = 20) -> list[int]:
     scores = _bm25_cache.get_scores(query.split())
     return list(np.argsort(scores)[::-1][:top_k])
 
+
+def _rrf(results_a: list[int], results_b: list[int], k: int = 60) -> list[int]:
+    """
+    Reciprocal Rank Fusion으로 두 랭킹 병합.
+
+    RRF(d) = Σ 1 / (k + rank(d))
+    k=60: 상위 랭크에 지나친 가중치 쏠림 방지. 실험적으로 검증된 기본값.
+    두 결과 모두에 등장한 문서는 점수가 더 높아짐.
+    """
+    scores: dict[int, float] = {}
+    for rank, idx in enumerate(results_a, 1):
+        scores[idx] = scores.get(idx, 0.0) + 1.0 / (k + rank)
+    for rank, idx in enumerate(results_b, 1):
+        scores[idx] = scores.get(idx, 0.0) + 1.0 / (k + rank)
+    return sorted(scores, key=lambda x: scores[x], reverse=True)
+
