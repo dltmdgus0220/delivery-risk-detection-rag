@@ -119,3 +119,29 @@ def _rerank_cohere(query: str, candidates: list[dict], top_n: int) -> list[dict]
     )
     return [candidates[r.index] for r in response.results]
 
+
+# ── 메인 ────────────────────────────────────────────────────
+
+def rerank(reranker_name: str, query: str, candidates: list[dict], top_n: int = 5) -> list[dict]:
+    """
+    리랭킹 메인 함수.
+
+    Args:
+        reranker_name : "cross-encoder" | "mmr" | "cohere"
+        query         : 검색 쿼리
+        candidates    : hybrid_search 결과 (chunk dict 리스트, top-20)
+        top_n         : 최종 반환 수 (기본 5)
+
+    Returns:
+        리랭킹된 청크 dict 리스트 (top_n개)
+    """
+    if reranker_name == "cross-encoder":
+        return _rerank_cross_encoder(query, candidates, top_n, ko=False)
+    elif reranker_name == "cross-encoder-ko":
+        return _rerank_cross_encoder(query, candidates, top_n, ko=True)
+    elif reranker_name == "mmr":
+        return _rerank_mmr(query, candidates, top_n)
+    elif reranker_name == "cohere":
+        return _rerank_cohere(query, candidates, top_n)
+    else:
+        raise ValueError(f"지원하지 않는 리랭커: {reranker_name}. 선택 가능: {SUPPORTED_RERANKERS}")
