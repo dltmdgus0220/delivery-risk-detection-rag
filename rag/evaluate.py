@@ -116,3 +116,31 @@ def compute_ndcg(ranked_chunks: list[dict], relevance: dict[int, int], k: int = 
     idcg = sum(rel / math.log2(i + 2) for i, rel in enumerate(ideal))
     return dcg / idcg if idcg > 0 else 0.0
 
+
+# ── 평가 메인 ───────────────────────────────────────────────
+
+def run_evaluation() -> dict:
+    """
+    평가 전체 흐름:
+    1. 20개 쿼리별 하이브리드 검색 top-20
+    2. GPT-4o-mini judge로 ground truth 생성
+    3. 각 리랭커 적용 → top-5
+    4. MRR@5 + NDCG@5 + Latency P50/P95 계산
+    """
+    # 1. 쿼리별 하이브리드 검색 + ground truth 생성
+    query_candidates: list[list[dict]] = []
+    ground_truth: list[dict[int, int]] = []  # chunk id → 관련성
+
+    for q_idx, query in enumerate(EVAL_QUERIES):
+        logger.info(f"[{q_idx+1}/{len(EVAL_QUERIES)}] 하이브리드 검색: '{query}'")
+        candidates = hybrid_search(query, top_k=20)
+        query_candidates.append(candidates)
+
+        relevance: dict[int, int] = {}
+        for chunk in candidates:
+            relevance[chunk["id"]] = judge_relevance(query, chunk["chunk_text"])
+            time.sleep(0.1)
+
+        relevant_count = sum(relevance.values())
+        logger.info(f"  → 후보 {len(candidates)}개 중 관련 {relevant_count}개")
+        ground_truth.append(relevance)
