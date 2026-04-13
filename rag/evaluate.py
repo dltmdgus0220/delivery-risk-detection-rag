@@ -1,9 +1,14 @@
 """
-리랭커 비교 평가 (NDCG@5, Latency P50/P95).
+리랭커 비교 평가 (MRR@5, NDCG@5, Latency P50/P95).
 
 하이브리드 검색 top-20 → 각 리랭커 → top-5 결과를 비교.
 Ground truth: 하이브리드 검색 결과에 대해 GPT-4o-mini judge로 관련성(0/1) 레이블링.
 결정 기준: NDCG@5 차이 5% 미만이면 속도가 빠른 것 선택.
+
+MRR 사용 이유:
+  벡터 검색/BM25는 "관련 있는 것만" 뽑는 게 아니라 "유사도/키워드 점수 높은 순" 으로 뽑음.
+  → top-20 안에 실제 관련 없는 문서가 섞임 (키워드만 겹치거나 의미상 가까운 무관 문서).
+  → 리랭커가 관련 있는 것을 top-5 안에서 얼마나 앞으로 올렸는지 MRR로 측정 가능.
 
 사용 예시:
     python -m rag.evaluate
@@ -89,4 +94,25 @@ def judge_relevance(query: str, chunk_text: str, max_retries: int = 3) -> int:
             if attempt < max_retries:
                 time.sleep(2 ** attempt)
     return 0
+
+
+# ── 평가 지표 ───────────────────────────────────────────────
+
+def compute_mrr(ranked_chunks: list[dict], relevance: dict[int, int], k: int = 5) -> float:
+    """MRR@k 계산. 첫 번째 관련 청크가 등장하는 순위의 역수."""
+    for i, chunk in enumerate(ranked_chunks[:k], 1):
+        if relevance.get(chunk["id"], 0) == 1:
+            return 1.0 / i
+    return 0.0
+
+
+def compute_ndcg(ranked_chunks: list[dict], relevance: dict[int, int], k: int = 5) -> float:
+    """NDCG@k 계산. relevance 키는 chunk id."""
+    dcg = sum(
+        relevance.get(c["id"], 0) / math.log2(i + 2)
+        for i, c in enumerate(ranked_chunks[:k])
+    )
+    ideal = sorted(relevance.values(), reverse=True)[:k]
+    idcg = sum(rel / math.log2(i + 2) for i, rel in enumerate(ideal))
+    return dcg / idcg if idcg > 0 else 0.0
 
