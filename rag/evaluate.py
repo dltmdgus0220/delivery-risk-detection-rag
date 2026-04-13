@@ -213,3 +213,12 @@ def print_summary(summary: dict):
     else:
         print(f"→ NDCG@5 차이 {diff:.4f} ≥ 0.05 → 성능 우선: {best} 선택 권장")
 
+
+def main():
+    report = run_evaluation()
+    save_report(report)
+    print_summary(report["summary"])
+
+
+if __name__ == "__main__":
+    main()
