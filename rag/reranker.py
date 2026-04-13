@@ -100,3 +100,22 @@ def _rerank_mmr(query: str, candidates: list[dict], top_n: int, lambda_: float =
 
     return [candidates[i] for i in selected_indices]
 
+
+# ── Cohere ───────────────────────────────────────────────────
+
+def _rerank_cohere(query: str, candidates: list[dict], top_n: int) -> list[dict]:
+    """
+    Cohere Rerank API — 성능 기준선(SOTA).
+    COHERE_API_KEY 필요.
+    """
+    import cohere
+    co = cohere.ClientV2(api_key=os.environ["COHERE_API_KEY"])
+    docs = [c["chunk_text"] for c in candidates]
+    response = co.rerank(
+        model="rerank-multilingual-v3.0",
+        query=query,
+        documents=docs,
+        top_n=top_n,
+    )
+    return [candidates[r.index] for r in response.results]
+
