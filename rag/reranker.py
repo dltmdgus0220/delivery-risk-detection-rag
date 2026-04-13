@@ -60,3 +60,43 @@ def _rerank_cross_encoder(query: str, candidates: list[dict], top_n: int, ko: bo
     ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)
     return [c for c, _ in ranked[:top_n]]
 
+
+# ── MMR (Maximal Marginal Relevance) ────────────────────────
+
+def _rerank_mmr(query: str, candidates: list[dict], top_n: int, lambda_: float = 0.5) -> list[dict]:
+    """
+    MMR — 관련성과 다양성을 동시에 최적화.
+
+    각 단계에서 아래를 최대화하는 문서 선택:
+        λ × relevance(d, query) - (1-λ) × max_similarity(d, selected)
+
+    λ=0.5: 관련성과 다양성 동등 반영.
+    유사 리뷰가 top-5를 독점하는 문제 방지.
+    """
+    from agents.embedding.embedder import embed
+
+    q_vec = embed(EMBEDDING_MODEL, [query], is_query=True)[0]
+    doc_vecs = np.stack([c["embedding"] for c in candidates])
+
+    # 코사인 유사도 (이미 L2 정규화된 벡터 → 내적 = 코사인 유사도)
+    relevance = doc_vecs @ q_vec
+
+    selected_indices: list[int] = []
+    remaining = list(range(len(candidates)))
+
+    for _ in range(min(top_n, len(candidates))):
+        if not selected_indices:
+            best = max(remaining, key=lambda i: relevance[i])
+        else:
+            selected_vecs = doc_vecs[selected_indices]
+            mmr_scores = {
+                i: lambda_ * relevance[i] - (1 - lambda_) * float(np.max(doc_vecs[i] @ selected_vecs.T))
+                for i in remaining
+            }
+            best = max(remaining, key=lambda i: mmr_scores[i])
+
+        selected_indices.append(best)
+        remaining.remove(best)
+
+    return [candidates[i] for i in selected_indices]
+
