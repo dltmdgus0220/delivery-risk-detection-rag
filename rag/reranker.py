@@ -14,3 +14,12 @@ import os
 import numpy as np
 from dotenv import load_dotenv
 
+load_dotenv()
+logger = logging.getLogger(__name__)
+
+SUPPORTED_RERANKERS = ["cross-encoder", "mmr", "cohere"]
+EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
+
+# Cross-encoder 모델 캐시
+_ce_cache = None
+
