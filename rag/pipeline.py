@@ -15,3 +15,10 @@ from dotenv import load_dotenv
 
 from rag.reranker import SUPPORTED_RERANKERS, rerank
 from rag.retriever import hybrid_search
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+DEFAULT_RERANKER = "cross-encoder"
+
