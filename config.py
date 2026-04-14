@@ -16,6 +16,10 @@ load_dotenv()
 # "aspect" : LLM으로 배달속도/음식품질/앱UX/가격/CS 단위로 분리
 CHUNKER_MODE: str = os.getenv("CHUNKER_MODE", "single")
 
-# 임베딩 모델
-# "BAAI/bge-m3" | "intfloat/multilingual-e5-large" | "text-embedding-3-small"
-EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
+# 임베딩 모델 — 평가 결과 intfloat/multilingual-e5-large 선정 (Stage 5)
+# "intfloat/multilingual-e5-large" | "BAAI/bge-m3" | "text-embedding-3-small"
+EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-large")
+
+# 리랭커 — 평가 결과 albert-kor 선정 (Stage 6)
+# "albert-kor" | "cross-encoder-mmarco" | "mmr" | "cross-encoder" | "cohere"
+RERANKER: str = os.getenv("RERANKER", "albert-kor")
