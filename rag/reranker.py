@@ -38,14 +38,14 @@ def _get_cross_encoder():
     return _ce_cache
 
 
-def _get_cross_encoder_ko():
-    """한국어 Cross-encoder 로드 (캐시). mMARCO(MS MARCO 다국어 번역, 한국어 포함)로 학습."""
-    global _ce_ko_cache
-    if _ce_ko_cache is None:
+def _get_cross_encoder_mmarco():
+    """다국어 Cross-encoder 로드 (캐시). mMARCO(MS MARCO 다국어 번역, 한국어 포함)로 학습."""
+    global _ce_mmarco_cache
+    if _ce_mmarco_cache is None:
         from sentence_transformers import CrossEncoder
-        _ce_ko_cache = CrossEncoder("bongsoo/mmarco-mMiniLMv2-L12-H384-v1")
-        logger.info("Cross-encoder (한국어) 모델 로드 완료")
-    return _ce_ko_cache
+        _ce_mmarco_cache = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+        logger.info("Cross-encoder (mMARCO 다국어) 모델 로드 완료")
+    return _ce_mmarco_cache
 
 
 def _rerank_cross_encoder(query: str, candidates: list[dict], top_n: int, ko: bool = False) -> list[dict]:
