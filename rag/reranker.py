@@ -48,7 +48,16 @@ def _get_cross_encoder_mmarco():
     return _ce_mmarco_cache
 
 
-def _rerank_cross_encoder(query: str, candidates: list[dict], top_n: int, ko: bool = False) -> list[dict]:
+def _get_albert_kor():
+    """한국어 전용 Cross-encoder 로드 (캐시). ALBERT 기반, 한국어 원어 학습."""
+    global _albert_kor_cache
+    if _albert_kor_cache is None:
+        from sentence_transformers import CrossEncoder
+        _albert_kor_cache = CrossEncoder("bongsoo/albert-small-kor-cross-encoder-v1")
+        logger.info("Albert-kor Cross-encoder (한국어) 모델 로드 완료")
+    return _albert_kor_cache
+
+
     """
     Cross-encoder로 (query, chunk) 쌍 직접 스코어링.
     쿼리와 문서를 함께 입력해 관련성을 직접 계산 → bi-encoder보다 정확.
