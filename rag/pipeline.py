@@ -49,3 +49,11 @@ def run_pipeline(query: str, reranker_name: str = DEFAULT_RERANKER, top_n: int =
 
     return results
 
+
+def print_results(query: str, results: list[dict]):
+    print(f"\n=== 검색 결과: '{query}' ===\n")
+    for i, chunk in enumerate(results, 1):
+        print(f"[{i}] chunk_id={chunk['id']} | review_id={chunk['raw_review_id']}")
+        print(f"    {chunk['chunk_text'][:200]}")
+        print()
+
