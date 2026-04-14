@@ -1,5 +1,5 @@
 """
-리랭커 구현 — Cross-encoder / MMR / Cohere.
+리랭커 구현 — Cross-encoder / BGE-Reranker / MMR / Cohere.
 
 하이브리드 검색 top-20을 입력받아 top-5로 압축.
 
@@ -17,12 +17,13 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-SUPPORTED_RERANKERS = ["cross-encoder", "cross-encoder-ko", "mmr", "cohere"]
+SUPPORTED_RERANKERS = ["cross-encoder", "cross-encoder-mmarco", "albert-kor", "mmr", "cohere"]
 EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
 
-# Cross-encoder 모델 캐시
-_ce_cache = None       # 영어: cross-encoder/ms-marco-MiniLM-L-6-v2
-_ce_ko_cache = None    # 한국어: bongsoo/mmarco-mMiniLMv2-L12-H384-v1
+# 모델 캐시
+_ce_cache = None          # 영어: cross-encoder/ms-marco-MiniLM-L6-v2
+_ce_mmarco_cache = None   # 다국어: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+_albert_kor_cache = None  # 한국어 전용: bongsoo/albert-small-kor-cross-encoder-v1
 
 
 # ── Cross-encoder ────────────────────────────────────────────
