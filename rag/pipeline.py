@@ -57,3 +57,16 @@ def print_results(query: str, results: list[dict]):
         print(f"    {chunk['chunk_text'][:200]}")
         print()
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="RAG 파이프라인 — 쿼리 검색 테스트")
+    parser.add_argument("--query", required=True, help="검색 쿼리")
+    parser.add_argument(
+        "--reranker",
+        choices=SUPPORTED_RERANKERS,
+        default=DEFAULT_RERANKER,
+        help=f"리랭커 종류 (기본값: {DEFAULT_RERANKER})",
+    )
+    parser.add_argument("--top-n", type=int, default=5, help="최종 반환 청크 수 (기본값: 5)")
+    return parser.parse_args()
+
