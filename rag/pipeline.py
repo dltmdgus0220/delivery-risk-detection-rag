@@ -22,3 +22,30 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_RERANKER = "cross-encoder"
 
+
+def run_pipeline(query: str, reranker_name: str = DEFAULT_RERANKER, top_n: int = 5) -> list[dict]:
+    """
+    RAG 파이프라인 메인 함수.
+
+    1. 하이브리드 검색 (벡터 + BM25 + RRF) → top-20
+    2. 리랭킹 → top-5
+    3. 결과 반환
+
+    Args:
+        query         : 자연어 검색 쿼리
+        reranker_name : 리랭커 종류 (기본: cross-encoder)
+        top_n         : 최종 반환 청크 수 (기본 5)
+
+    Returns:
+        청크 dict 리스트 (id, raw_review_id, chunk_index, chunk_text 포함)
+    """
+    logger.info(f"쿼리: '{query}' | 리랭커: {reranker_name}")
+
+    candidates = hybrid_search(query, top_k=20)
+    logger.info(f"하이브리드 검색 완료: {len(candidates)}개 후보")
+
+    results = rerank(reranker_name, query, candidates, top_n=top_n)
+    logger.info(f"리랭킹 완료: 최종 {len(results)}개 반환")
+
+    return results
+
