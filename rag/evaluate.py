@@ -33,7 +33,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 REPORT_PATH = "eval_report_reranker.json"
-EVAL_RERANKERS = ["cross-encoder", "cross-encoder-ko", "mmr"]  # cohere는 비용으로 기본 제외 (필요 시 추가)
+EVAL_RERANKERS = ["cross-encoder", "cross-encoder-mmarco", "albert-kor", "mmr"]  # cohere는 비용으로 기본 제외 (필요 시 추가)
 
 EVAL_QUERIES: list[str] = [
     "배달이 너무 늦어요",
