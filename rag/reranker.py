@@ -58,14 +58,21 @@ def _get_albert_kor():
     return _albert_kor_cache
 
 
+def _rerank_cross_encoder(query: str, candidates: list[dict], top_n: int, model: str = "en") -> list[dict]:
     """
     Cross-encoder로 (query, chunk) 쌍 직접 스코어링.
     쿼리와 문서를 함께 입력해 관련성을 직접 계산 → bi-encoder보다 정확.
 
-    ko=True: 한국어 특화 모델(bongsoo) 사용
+    model: "en" → MS MARCO 영어 / "mmarco" → mMARCO 다국어 / "bge" → BGE 다국어
     """
-    ce = _get_cross_encoder_ko() if ko else _get_cross_encoder()
-    pairs = [(query, c["chunk_text"]) for c in candidates] # (쿼리, 문서) 쌍 
+    if model == "mmarco":
+        ce = _get_cross_encoder_mmarco()
+    elif model == "albert-kor":
+        ce = _get_albert_kor()
+    else:
+        ce = _get_cross_encoder()
+
+    pairs = [(query, c["chunk_text"]) for c in candidates]  # (쿼리, 문서) 쌍
     scores = ce.predict(pairs)
     ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)
     return [c for c, _ in ranked[:top_n]]
@@ -137,7 +144,7 @@ def rerank(reranker_name: str, query: str, candidates: list[dict], top_n: int = 
     리랭킹 메인 함수.
 
     Args:
-        reranker_name : "cross-encoder" | "mmr" | "cohere"
+        reranker_name : "cross-encoder" | "cross-encoder-mmarco" | "bge-reranker" | "mmr" | "cohere"
         query         : 검색 쿼리
         candidates    : hybrid_search 결과 (chunk dict 리스트, top-20)
         top_n         : 최종 반환 수 (기본 5)
@@ -146,9 +153,11 @@ def rerank(reranker_name: str, query: str, candidates: list[dict], top_n: int = 
         리랭킹된 청크 dict 리스트 (top_n개)
     """
     if reranker_name == "cross-encoder":
-        return _rerank_cross_encoder(query, candidates, top_n, ko=False)
-    elif reranker_name == "cross-encoder-ko":
-        return _rerank_cross_encoder(query, candidates, top_n, ko=True)
+        return _rerank_cross_encoder(query, candidates, top_n, model="en")
+    elif reranker_name == "cross-encoder-mmarco":
+        return _rerank_cross_encoder(query, candidates, top_n, model="mmarco")
+    elif reranker_name == "albert-kor":
+        return _rerank_cross_encoder(query, candidates, top_n, model="albert-kor")
     elif reranker_name == "mmr":
         return _rerank_mmr(query, candidates, top_n)
     elif reranker_name == "cohere":
