@@ -13,6 +13,7 @@ import logging
 
 from dotenv import load_dotenv
 
+from config import RERANKER
 from rag.reranker import SUPPORTED_RERANKERS, rerank
 from rag.retriever import hybrid_search
 
@@ -20,7 +21,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEFAULT_RERANKER = "cross-encoder"
+DEFAULT_RERANKER = RERANKER  # .env의 RERANKER 값 사용 (기본: albert-kor)
 
 
 def run_pipeline(query: str, reranker_name: str = DEFAULT_RERANKER, top_n: int = 5) -> list[dict]:
@@ -33,7 +34,7 @@ def run_pipeline(query: str, reranker_name: str = DEFAULT_RERANKER, top_n: int =
 
     Args:
         query         : 자연어 검색 쿼리
-        reranker_name : 리랭커 종류 (기본: cross-encoder)
+        reranker_name : 리랭커 종류 (기본: .env의 RERANKER 값)
         top_n         : 최종 반환 청크 수 (기본 5)
 
     Returns:
