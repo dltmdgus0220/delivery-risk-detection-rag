@@ -70,3 +70,12 @@ def parse_args():
     parser.add_argument("--top-n", type=int, default=5, help="최종 반환 청크 수 (기본값: 5)")
     return parser.parse_args()
 
+
+def main():
+    args = parse_args()
+    results = run_pipeline(args.query, args.reranker, args.top_n)
+    print_results(args.query, results)
+
+
+if __name__ == "__main__":
+    main()
