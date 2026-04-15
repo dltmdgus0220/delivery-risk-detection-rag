@@ -45,3 +45,32 @@ def _get_llm() -> ChatOpenAI:
         _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     return _llm
 
+
+def orchestrate(state: AgentStateDict) -> AgentStateDict:
+    """
+    Orchestrator 노드.
+
+    사용자 질문(state["query"])을 보고 실행할 도구 목록(intent)을 결정해 반환한다.
+    """
+    query = state["query"]
+    logger.info(f"Orchestrator 시작: '{query}'")
+
+    llm = _get_llm()
+    response = llm.invoke([
+        {"role": "system", "content": ORCHESTRATOR_SYSTEM},
+        {"role": "user", "content": query},
+    ])
+
+    raw = response.content.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1].removeprefix("json")
+
+    result = json.loads(raw.strip())
+    intent: list[str] = result.get("intent", ["rag"])
+
+    # 유효하지 않은 값 필터링 → 아무것도 없으면 rag로 폴백
+    valid = {"sql", "rag", "viz"}
+    intent = [i for i in intent if i in valid] or ["rag"]
+
+    logger.info(f"Orchestrator 결정: {intent}")
+    return {"intent": intent}
