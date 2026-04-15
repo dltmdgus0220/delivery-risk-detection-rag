@@ -28,6 +28,14 @@ sentence-transformers==3.3.1
 rank-bm25==0.2.2
 cohere==5.13.0
 
+# LangChain / LangGraph (Stage 7 Agent 챗봇)
+langgraph==0.2.73
+langchain-openai==0.2.14
+langchain-core==0.3.29
+
+# plotly 이미지 렌더링 (write_image PNG 변환에 필요)
+kaleido==0.2.1
+
 # 대시보드
 streamlit==1.41.1
 plotly==5.24.1
