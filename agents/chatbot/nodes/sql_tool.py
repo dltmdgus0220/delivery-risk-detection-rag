@@ -89,3 +89,14 @@ def run_sql(state: AgentStateDict) -> AgentStateDict:
         {"role": "user", "content": query},
     ])
 
+    raw = response.content.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1].removeprefix("json")
+
+    result = json.loads(raw.strip())
+    sql = result.get("sql", "")
+    logger.info(f"생성된 SQL: {sql}")
+
+    # 2. 안전성 검증
+    sql = _validate_sql(sql)
+
