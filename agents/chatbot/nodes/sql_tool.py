@@ -70,3 +70,22 @@ def _validate_sql(sql: str) -> str:
 
     return sql
 
+
+def run_sql(state: AgentStateDict) -> AgentStateDict:
+    """
+    SQL Tool 노드.
+
+    1. LLM으로 Text-to-SQL 생성
+    2. 안전성 검증 (SELECT + 화이트리스트)
+    3. 실행 후 결과 반환
+    """
+    query = state["query"]
+    logger.info(f"SQL Tool 시작: '{query}'")
+
+    # 1. Text-to-SQL 생성
+    llm = _get_llm()
+    response = llm.invoke([
+        {"role": "system", "content": SQL_SYSTEM},
+        {"role": "user", "content": query},
+    ])
+
