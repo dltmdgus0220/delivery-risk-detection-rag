@@ -100,3 +100,11 @@ def run_sql(state: AgentStateDict) -> AgentStateDict:
     # 2. 안전성 검증
     sql = _validate_sql(sql)
 
+    # 3. 실행
+    with engine.connect() as conn:
+        rows = conn.execute(text(sql)).mappings().fetchall()
+
+    sql_result = [dict(row) for row in rows]
+    logger.info(f"SQL 실행 완료: {len(sql_result)}행 반환")
+
+    return {"sql_result": sql_result}
