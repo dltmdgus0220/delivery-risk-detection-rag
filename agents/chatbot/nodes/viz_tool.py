@@ -59,3 +59,14 @@ def _get_llm() -> ChatOpenAI:
         _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     return _llm
 
+
+def _validate_sql(sql: str) -> str:
+    sql = sql.strip()
+    if not sql.upper().startswith("SELECT"):
+        raise ValueError(f"SELECT만 허용됩니다. 생성된 쿼리: {sql[:100]}")
+    used_tables = set(re.findall(r"(?:FROM|JOIN)\s+(\w+)", sql, re.IGNORECASE))
+    disallowed = used_tables - ALLOWED_TABLES
+    if disallowed:
+        raise ValueError(f"허용되지 않은 테이블: {disallowed}")
+    return sql
+
