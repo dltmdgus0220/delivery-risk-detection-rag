@@ -53,3 +53,46 @@ class ChatResponse(BaseModel): # /chat이 반환하는 응답 구조. 즉 질문
 # 실서비스에서는 Redis 등 외부 저장소로 교체
 _sessions: dict[str, list] = {}
 
+
+# ── 엔드포인트 ────────────────────────────────────────────────
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat(req: ChatRequest):
+    """
+    챗봇 메인 엔드포인트.
+
+    LangGraph chatbot을 실행해 answer, intent, citations, chart를 반환한다.
+    """
+    logger.info(f"[{req.session_id}] 질문: '{req.message}'")
+
+    history = _sessions.get(req.session_id, [])
+
+    try:
+        result = chatbot.invoke({
+            "query": req.message,
+            "messages": [HumanMessage(content=req.message)] + history,
+            "session_id": req.session_id,
+        })
+    except Exception as e:
+        logger.error(f"챗봇 실행 오류: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # 세션 히스토리 업데이트
+    _sessions[req.session_id] = result.get("messages", [])
+
+    citations = [
+        Citation(review_id=c["review_id"], excerpt=c["excerpt"])
+        for c in result.get("citations", [])
+    ]
+
+    return ChatResponse(
+        answer=result.get("answer", ""),
+        intent=result.get("intent", []),
+        citations=citations,
+        chart=result.get("chart"),
+    )
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
