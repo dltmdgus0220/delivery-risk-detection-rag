@@ -41,3 +41,12 @@ DB 스키마:
   - 결과는 최대 100행으로 제한 (LIMIT 100)
   - 반드시 JSON 형식으로만 응답: {"sql": "SELECT ..."}"""
 
+
+_llm: ChatOpenAI | None = None
+
+def _get_llm() -> ChatOpenAI:
+    global _llm
+    if _llm is None:
+        _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    return _llm
+
