@@ -50,3 +50,12 @@ DB 스키마 (SQL이 필요한 경우):
 - sql이 필요한 경우 SELECT만 작성, LIMIT 100 포함
 - 허용 테이블: raw_reviews, processed_reviews, review_labels, review_chunks"""
 
+
+_llm: ChatOpenAI | None = None
+
+def _get_llm() -> ChatOpenAI:
+    global _llm
+    if _llm is None:
+        _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    return _llm
+
