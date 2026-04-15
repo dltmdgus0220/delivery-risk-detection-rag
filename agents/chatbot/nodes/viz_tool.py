@@ -136,3 +136,16 @@ def run_viz(state: AgentStateDict) -> AgentStateDict:
     x_col = spec.get("x_col", "")
     y_col = spec.get("y_col", "")
 
+    # 2. sql_result 없으면 SQL 생성 + 실행
+    if not sql_result and "sql" in spec:
+        sql = _validate_sql(spec["sql"])
+        logger.info(f"Viz SQL 실행: {sql}")
+        with engine.connect() as conn:
+            rows = conn.execute(text(sql)).mappings().fetchall()
+        sql_result = [dict(row) for row in rows]
+        logger.info(f"Viz SQL 결과: {len(sql_result)}행")
+
+    if not sql_result:
+        logger.warning("Viz Tool: 차트 생성에 필요한 데이터 없음")
+        return {"chart": None}
+
