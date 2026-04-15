@@ -73,3 +73,51 @@ def _build_citations(rag_result: list[dict]) -> list[dict]:
         for c in rag_result
     ]
 
+
+def generate_answer(state: AgentStateDict) -> AgentStateDict:
+    """
+    Answer Generator 노드.
+
+    툴 결과를 컨텍스트로 구성해 LLM에게 최종 답변을 생성하도록 요청한다.
+    멀티턴 히스토리(messages)도 함께 전달해 이전 대화 맥락을 유지한다.
+    """
+    query = state["query"]
+    intent = state.get("intent", ["chat"])
+    logger.info(f"Answer Generator 시작 | intent: {intent}")
+
+    # 컨텍스트 구성
+    context = _build_context(state)
+
+    user_content = f"질문: {query}"
+    if context:
+        user_content += f"\n\n{context}"
+
+    # 멀티턴 히스토리 포함
+    # 맥락 유지를 위해서
+    history = state.get("messages", [])
+    messages = [{"role": "system", "content": ANSWER_SYSTEM}]
+    for msg in history:
+        if isinstance(msg, HumanMessage):
+            messages.append({"role": "user", "content": msg.content})
+        elif isinstance(msg, AIMessage):
+            messages.append({"role": "assistant", "content": msg.content})
+    messages.append({"role": "user", "content": user_content})
+
+    llm = _get_llm()
+    response = llm.invoke(messages)
+    answer = response.content.strip()
+
+    logger.info("Answer Generator 완료")
+
+    # citation은 RAG 결과에서만 생성
+    rag_result = state.get("rag_result", [])
+    citations = _build_citations(rag_result) if rag_result else []
+
+    return {
+        "answer": answer,
+        "citations": citations,
+        "messages": [
+            HumanMessage(content=query),
+            AIMessage(content=answer),
+        ],
+    }
