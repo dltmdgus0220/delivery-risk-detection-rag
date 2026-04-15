@@ -50,3 +50,23 @@ def _get_llm() -> ChatOpenAI:
         _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     return _llm
 
+
+def _validate_sql(sql: str) -> str:
+    """
+    SQL 안전성 검증.
+    - SELECT로 시작하는지 확인
+    - 허용되지 않은 테이블 참조 차단
+    """
+    sql = sql.strip()
+
+    if not sql.upper().startswith("SELECT"):
+        raise ValueError(f"SELECT만 허용됩니다. 생성된 쿼리: {sql[:100]}")
+
+    # 사용된 테이블 추출 (FROM, JOIN 뒤에 오는 단어)
+    used_tables = set(re.findall(r"(?:FROM|JOIN)\s+(\w+)", sql, re.IGNORECASE))
+    disallowed = used_tables - ALLOWED_TABLES
+    if disallowed:
+        raise ValueError(f"허용되지 않은 테이블: {disallowed}")
+
+    return sql
+
