@@ -29,3 +29,27 @@ app.add_middleware(
     allow_headers=["*"], # 모든 헤더 허용
 )
 
+
+# ── 요청 / 응답 스키마 ────────────────────────────────────────
+
+class ChatRequest(BaseModel): # /chat으로 들어오는 요청 구조. 즉 사용자가 입력하는 것.
+    message: str
+    session_id: str = "default"
+
+
+class Citation(BaseModel): # 인용 출처 구조
+    review_id: int
+    excerpt: str
+
+
+class ChatResponse(BaseModel): # /chat이 반환하는 응답 구조. 즉 질문에 대한 답변.
+    answer: str
+    intent: list[str]
+    citations: list[Citation]
+    chart: str | None  # base64 PNG or None
+
+
+# ── 세션 히스토리 (인메모리) ──────────────────────────────────
+# 실서비스에서는 Redis 등 외부 저장소로 교체
+_sessions: dict[str, list] = {}
+
