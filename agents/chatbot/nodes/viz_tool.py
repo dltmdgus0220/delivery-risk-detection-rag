@@ -149,3 +149,9 @@ def run_viz(state: AgentStateDict) -> AgentStateDict:
         logger.warning("Viz Tool: 차트 생성에 필요한 데이터 없음")
         return {"chart": None}
 
+    # 3. 차트 생성 → base64
+    fig = _build_chart(chart_type, title, x_col, y_col, sql_result)
+    chart_b64 = _to_base64_png(fig)
+    logger.info("Viz Tool 완료: 차트 생성 성공")
+
+    return {"chart": chart_b64}
