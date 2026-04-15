@@ -70,3 +70,11 @@ def _validate_sql(sql: str) -> str:
         raise ValueError(f"허용되지 않은 테이블: {disallowed}")
     return sql
 
+
+def _to_base64_png(fig: go.Figure) -> str:
+    """plotly Figure → base64 PNG 문자열 변환."""
+    buf = io.BytesIO()
+    fig.write_image(buf, format="png", width=800, height=500)
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode("utf-8")
+
