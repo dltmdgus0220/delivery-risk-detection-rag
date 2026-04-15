@@ -30,3 +30,12 @@ ANSWER_SYSTEM = """너는 배달앱 리뷰 분석 챗봇이야.
 - SQL 수치가 있으면 구체적인 숫자를 포함해서 답변해.
 - 자연스러운 한국어로 답변해."""
 
+
+_llm: ChatOpenAI | None = None
+
+def _get_llm() -> ChatOpenAI:
+    global _llm
+    if _llm is None:
+        _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+    return _llm
+
