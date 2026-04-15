@@ -39,3 +39,26 @@ def _get_llm() -> ChatOpenAI:
         _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
     return _llm
 
+
+def _build_context(state: AgentStateDict) -> str:
+    """툴 결과를 LLM에 넘길 컨텍스트 문자열로 변환."""
+    parts = []
+
+    sql_result = state.get("sql_result", [])
+    if sql_result:
+        parts.append(f"[SQL 결과] ({len(sql_result)}행)\n" +
+                     json.dumps(sql_result[:20], ensure_ascii=False, default=str)) # json.dumps: python 객체(dict, list 등) -> json 문자열로 반환. 반대는 json.loads
+
+    rag_result = state.get("rag_result", [])
+    if rag_result:
+        chunks = "\n".join(
+            f"[리뷰 {i+1}] review_id={c['raw_review_id']} | {c['chunk_text']}"
+            for i, c in enumerate(rag_result)
+        )
+        parts.append(f"[관련 리뷰]\n{chunks}")
+
+    if state.get("chart"):
+        parts.append("[차트] 차트가 생성되었습니다.")
+
+    return "\n\n".join(parts)
+
