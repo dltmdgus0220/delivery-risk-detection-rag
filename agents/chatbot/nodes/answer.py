@@ -62,3 +62,14 @@ def _build_context(state: AgentStateDict) -> str:
 
     return "\n\n".join(parts)
 
+
+def _build_citations(rag_result: list[dict]) -> list[dict]:
+    """RAG 결과에서 citation 리스트 생성."""
+    return [
+        {
+            "review_id": c["raw_review_id"],
+            "excerpt": c["chunk_text"][:100],
+        }
+        for c in rag_result
+    ]
+
