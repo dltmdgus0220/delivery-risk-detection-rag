@@ -100,3 +100,39 @@ def _build_chart(chart_type: str, title: str, x_col: str, y_col: str, data: list
     fig.update_layout(title=title, template="plotly_white")
     return fig
 
+
+def run_viz(state: AgentStateDict) -> AgentStateDict:
+    """
+    Viz Tool 노드.
+
+    1. LLM으로 차트 명세(chart_type, title, x_col, y_col) 결정
+    2. sql_result가 없으면 SQL 생성 + 실행
+    3. plotly로 차트 생성 → base64 PNG 반환
+    """
+    query = state["query"]
+    sql_result = state.get("sql_result", []) # 항상 비어있지만 혹시나 오케스트레이터에 의해 sql+viz 툴이 실행될 경우를 대비.
+    logger.info(f"Viz Tool 시작: '{query}' | 기존 SQL 결과: {len(sql_result)}행")
+
+    # 1. LLM으로 차트 명세 결정
+    user_content = f"질문: {query}"
+    if sql_result:
+        # 데이터 미리보기 (최대 5행)
+        preview = json.dumps(sql_result[:5], ensure_ascii=False, default=str)
+        user_content += f"\n\n데이터 미리보기 (전체 {len(sql_result)}행):\n{preview}"
+
+    llm = _get_llm()
+    response = llm.invoke([
+        {"role": "system", "content": VIZ_SYSTEM},
+        {"role": "user", "content": user_content},
+    ])
+
+    raw = response.content.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1].removeprefix("json")
+
+    spec = json.loads(raw.strip())
+    chart_type = spec.get("chart_type", "bar")
+    title = spec.get("title", query)
+    x_col = spec.get("x_col", "")
+    y_col = spec.get("y_col", "")
+
