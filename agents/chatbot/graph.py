@@ -38,3 +38,30 @@ def _route(state: AgentStateDict) -> list[str] | str:
     next_nodes = [node_map[i] for i in intent if i in node_map]
     return next_nodes if next_nodes else "answer"
 
+
+def build_graph() -> StateGraph:
+    graph = StateGraph(AgentStateDict)
+
+    # 노드 등록
+    graph.add_node("orchestrator", orchestrate)
+    graph.add_node("sql_tool", run_sql)
+    graph.add_node("rag_tool", run_rag)
+    graph.add_node("viz_tool", run_viz)
+    graph.add_node("answer", generate_answer)
+
+    # 엣지
+    graph.add_edge(START, "orchestrator")
+    graph.add_conditional_edges("orchestrator", _route)  # intent → 병렬 or 단일 라우팅
+
+    # 각 툴 → answer (병렬 실행 후 모두 완료되면 answer로 수렴)
+    graph.add_edge("sql_tool", "answer")
+    graph.add_edge("rag_tool", "answer")
+    graph.add_edge("viz_tool", "answer")
+
+    graph.add_edge("answer", END)
+
+    return graph.compile()
+
+
+# 모듈 레벨 캐시 — 앱 시작 시 한 번만 컴파일
+chatbot = build_graph()
