@@ -38,7 +38,7 @@ DB 스키마 (SQL이 필요한 경우):
 
 응답 형식:
 {
-  "chart_type": "bar" | "line" | "pie",
+  "chart_type": "bar" | "line" | "pie" | "scatter" | "histogram" | "heatmap",
   "title": "차트 제목",
   "x_col": "x축 컬럼명",
   "y_col": "y축 컬럼명",
@@ -77,4 +77,26 @@ def _to_base64_png(fig: go.Figure) -> str:
     fig.write_image(buf, format="png", width=800, height=500)
     buf.seek(0)
     return base64.b64encode(buf.read()).decode("utf-8")
+
+
+def _build_chart(chart_type: str, title: str, x_col: str, y_col: str, data: list[dict]) -> go.Figure:
+    """데이터와 명세로 plotly Figure 생성."""
+    x = [row.get(x_col) for row in data]
+    y = [row.get(y_col) for row in data]
+
+    if chart_type == "pie":
+        fig = go.Figure(go.Pie(labels=x, values=y))
+    elif chart_type == "line":
+        fig = go.Figure(go.Scatter(x=x, y=y, mode="lines+markers"))
+    elif chart_type == "scatter":
+        fig = go.Figure(go.Scatter(x=x, y=y, mode="markers"))
+    elif chart_type == "histogram":
+        fig = go.Figure(go.Histogram(x=x))
+    elif chart_type == "heatmap":
+        fig = go.Figure(go.Heatmap(z=[y], x=x))
+    else:  # bar (기본)
+        fig = go.Figure(go.Bar(x=x, y=y))
+
+    fig.update_layout(title=title, template="plotly_white")
+    return fig
 
