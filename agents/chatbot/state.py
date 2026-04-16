@@ -39,6 +39,7 @@ class AgentStateDict(TypedDict, total=False):
 
     query: str
     intent: list[str]
+    label_filter: str | None   # "churn" | "complaint" | "positive" | None (전체)
     sql_result: list[dict[str, Any]]
     rag_result: list[dict[str, Any]]
     chart: str | None
