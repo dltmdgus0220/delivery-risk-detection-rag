@@ -121,3 +121,10 @@ with tab_chat:
             "chart": chart,
         })
 
+    # 대화 초기화 버튼
+    if st.session_state.messages:
+        if st.button("🗑️ 대화 초기화", key="clear_chat"):
+            st.session_state.messages = []
+            st.session_state.session_id = str(uuid.uuid4())
+            st.rerun()
+
