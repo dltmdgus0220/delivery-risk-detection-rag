@@ -31,3 +31,35 @@ if "messages" not in st.session_state:
     # {"role": "user"|"assistant", "content": str, "citations": [...], "chart": str|None}
     st.session_state.messages = []
 
+
+# ── 탭 ────────────────────────────────────────────────────────
+
+tab_chat, tab_hitl = st.tabs(["💬 챗봇", "🏷️ HITL"])
+
+
+# ══════════════════════════════════════════════════════════════
+# 챗봇 탭
+# ══════════════════════════════════════════════════════════════
+
+with tab_chat:
+    st.title("💬 리뷰 분석 챗봇")
+    st.caption("배달앱 리뷰에 대해 자유롭게 질문하세요.")
+
+    # 대화 히스토리 출력
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+            # 차트 렌더링
+            if msg.get("chart"):
+                img_bytes = base64.b64decode(msg["chart"])
+                st.image(BytesIO(img_bytes), use_container_width=True)
+
+            # citation 접기/펴기
+            citations = msg.get("citations", [])
+            if citations:
+                with st.expander(f"📎 인용 리뷰 {len(citations)}건"):
+                    for c in citations:
+                        st.markdown(
+                            f"**[리뷰 #{c['review_id']}]** {c['excerpt']}"
+                        )
