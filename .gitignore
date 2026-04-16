@@ -28,3 +28,4 @@ Thumbs.db
 !requirements.txt
 .claude/
 scheduler.py
+*.pem
