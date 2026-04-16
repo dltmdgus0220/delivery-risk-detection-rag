@@ -149,3 +149,31 @@ async def get_pending_labels(limit: int = 50):
 
     return [PendingReview(**dict(row)) for row in rows]
 
+
+@app.patch("/labels/{label_id}")
+async def update_label(label_id: int, body: LabelUpdate):
+    """
+    HITL 수동 분류 수정 — label 업데이트 + human_reviewed = TRUE 기록.
+    """
+    if body.label not in VALID_LABELS:
+        raise HTTPException(status_code=422, detail=f"label은 {VALID_LABELS} 중 하나여야 합니다.")
+
+    sql = text("""
+        UPDATE review_labels
+        SET label          = :label,
+            human_reviewed = TRUE,
+            reviewed_at    = :now
+        WHERE id = :label_id
+        RETURNING id
+    """)
+    with _engine.begin() as conn:
+        result = conn.execute(sql, {
+            "label": body.label,
+            "now": datetime.now(timezone.utc),
+            "label_id": label_id,
+        }).fetchone()
+
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"label_id={label_id} 를 찾을 수 없습니다.")
+
+    return {"label_id": label_id, "label": body.label, "human_reviewed": True}
