@@ -119,3 +119,33 @@ class PendingReview(BaseModel):
 class LabelUpdate(BaseModel):
     label: str  # churn | complaint | positive
 
+
+# ── HITL 엔드포인트 ──────────────────────────────────────────
+
+VALID_LABELS = {"churn", "complaint", "positive"}
+
+
+@app.get("/labels/pending", response_model=list[PendingReview])
+async def get_pending_labels(limit: int = 50):
+    """
+    label IS NULL인 리뷰 목록 반환 (HITL 대기열).
+    """
+    sql = text("""
+        SELECT
+            rl.id          AS label_id,
+            rl.raw_review_id,
+            rr.review_text,
+            rr.review_date::text AS review_date,
+            rr.rating,
+            rl.classified_by
+        FROM review_labels rl
+        JOIN raw_reviews rr ON rr.id = rl.raw_review_id
+        WHERE rl.label IS NULL
+        ORDER BY rr.review_date DESC
+        LIMIT :limit
+    """)
+    with _engine.connect() as conn:
+        rows = conn.execute(sql, {"limit": limit}).mappings().fetchall()
+
+    return [PendingReview(**dict(row)) for row in rows]
+
