@@ -54,27 +54,22 @@
 #   postgres_data:
 
 
+
+# 배포용 (AWS EC2 + RDS)
+# 실행: docker-compose -f docker-compose.prod.yml up -d
+# DB: RDS PostgreSQL (DATABASE_URL은 Secrets Manager → .env 주입)
+
+services:
   api:
-    build:
-      context: .
-      dockerfile: ./api/Dockerfile
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/baemin-api:latest
     ports:
       - "8000:8000"
     env_file:
       - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./api:/app
-      - ./agents:/app/agents
-      - ./rag:/app/rag
-      # 로컬과 컨테이너 내부 동기화.
+    restart: always
 
   dashboard:
-    build:
-      context: .
-      dockerfile: ./dashboard/Dockerfile
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/baemin-dashboard:latest
     ports:
       - "8501:8501"
     env_file:
@@ -83,11 +78,4 @@
       API_URL: http://api:8000
     depends_on:
       - api
-    volumes:
-      - ./dashboard:/app
-
-volumes:
-  postgres_data:
-
-
-# 로컬로 사용하기 위해 잠시 ports 5433:5432 로 변경. 배포 시 5432:5432 로 변경. 
+    restart: always
