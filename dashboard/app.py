@@ -63,3 +63,61 @@ with tab_chat:
                         st.markdown(
                             f"**[리뷰 #{c['review_id']}]** {c['excerpt']}"
                         )
+
+    # 입력창
+    if prompt := st.chat_input("질문을 입력하세요…"):
+        # 사용자 메시지 즉시 표시
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        # API 호출
+        with st.chat_message("assistant"):
+            with st.spinner("분석 중…"):
+                try:
+                    resp = requests.post(
+                        f"{API_URL}/chat",
+                        json={"message": prompt, "session_id": st.session_state.session_id},
+                        timeout=60,
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                except requests.exceptions.ConnectionError:
+                    st.error("API 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.")
+                    st.stop()
+                except Exception as e:
+                    st.error(f"오류: {e}")
+                    st.stop()
+
+            answer = data.get("answer", "")
+            citations = data.get("citations", [])
+            chart = data.get("chart")
+            intent = data.get("intent", [])
+
+            # intent 배지
+            badge_map = {"sql": "🔢 SQL", "rag": "🔍 RAG", "viz": "📊 시각화", "chat": "💬 대화"}
+            badges = " · ".join(badge_map.get(i, i) for i in intent)
+            if badges:
+                st.caption(badges)
+
+            st.markdown(answer)
+
+            if chart:
+                img_bytes = base64.b64decode(chart)
+                st.image(BytesIO(img_bytes), use_container_width=True)
+
+            if citations:
+                with st.expander(f"📎 인용 리뷰 {len(citations)}건"):
+                    for c in citations:
+                        st.markdown(
+                            f"**[리뷰 #{c['review_id']}]** {c['excerpt']}"
+                        )
+
+        # 히스토리에 저장
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer,
+            "citations": citations,
+            "chart": chart,
+        })
+
