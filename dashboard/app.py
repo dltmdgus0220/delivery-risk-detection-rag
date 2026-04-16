@@ -128,3 +128,25 @@ with tab_chat:
             st.session_state.session_id = str(uuid.uuid4())
             st.rerun()
 
+
+# ══════════════════════════════════════════════════════════════
+# HITL 탭
+# ══════════════════════════════════════════════════════════════
+
+LABEL_KO = {"churn": "이탈", "complaint": "불만", "positive": "긍정"}
+LABEL_COLOR = {"churn": "🔴", "complaint": "🟡", "positive": "🟢"}
+
+
+def _patch_label(label_id: int, label: str):
+    try:
+        resp = requests.patch(
+            f"{API_URL}/labels/{label_id}",
+            json={"label": label},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return True
+    except Exception as e:
+        st.error(f"업데이트 실패: {e}")
+        return False
+
