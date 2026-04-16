@@ -48,16 +48,21 @@ def _parse_embedding(raw) -> np.ndarray:
 
 
 def _load_chunks() -> list[dict]:
-    """review_chunks 전체를 메모리에 로드 (id, raw_review_id, chunk_index, chunk_text, embedding)."""
+    """
+    review_chunks 전체를 메모리에 로드.
+    review_labels와 LEFT JOIN해 label 필드 포함.
+    """
     global _chunks_cache, _doc_vecs_cache
     if _chunks_cache is not None:
         return _chunks_cache
 
     with engine.connect() as conn:
         rows = conn.execute(text("""
-            SELECT id, raw_review_id, chunk_index, chunk_text, embedding
-            FROM review_chunks
-            ORDER BY id
+            SELECT rc.id, rc.raw_review_id, rc.chunk_index, rc.chunk_text, rc.embedding,
+                   rl.label
+            FROM review_chunks rc
+            LEFT JOIN review_labels rl ON rl.raw_review_id = rc.raw_review_id
+            ORDER BY rc.id
         """)).fetchall()
 
     _chunks_cache = [
@@ -67,6 +72,7 @@ def _load_chunks() -> list[dict]:
             "chunk_index": row.chunk_index,
             "chunk_text": row.chunk_text,
             "embedding": _parse_embedding(row.embedding),
+            "label": row.label,  # "churn" | "complaint" | "positive" | None
         }
         for row in rows
     ]
