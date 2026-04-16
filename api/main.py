@@ -1,24 +1,31 @@
 """
-FastAPI 앱 — 챗봇 엔드포인트.
+FastAPI 앱 — 챗봇 + HITL 엔드포인트.
 
 엔드포인트:
-  POST /chat        챗봇 (message, session_id → answer, intent, citations, chart)
-  GET  /health      헬스체크
+  POST /chat                챗봇 (message, session_id → answer, intent, citations, chart)
+  GET  /labels/pending      HITL 대기 리뷰 목록 (label IS NULL)
+  PATCH /labels/{label_id}  HITL 수동 분류 수정
+  GET  /health              헬스체크
 """
 
 import logging
+import os
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
+from sqlalchemy import create_engine, text
 
 from agents.chatbot.graph import chatbot
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+_engine = create_engine(os.environ["DATABASE_URL"])
 
 app = FastAPI(title="배달앱 리뷰 분석 챗봇", version="1.0.0")
 
@@ -96,3 +103,19 @@ async def chat(req: ChatRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# ── HITL 스키마 ───────────────────────────────────────────────
+
+class PendingReview(BaseModel):
+    label_id: int
+    raw_review_id: int
+    review_text: str
+    review_date: str | None
+    rating: int | None
+    classified_by: str | None
+
+
+class LabelUpdate(BaseModel):
+    label: str  # churn | complaint | positive
+
