@@ -130,25 +130,33 @@ def _rrf(results_a: list[int], results_b: list[int], k: int = 60) -> list[int]:
 
 # ── 메인 ────────────────────────────────────────────────────
 
-def hybrid_search(query: str, top_k: int = 20) -> list[dict]:
+def hybrid_search(query: str, top_k: int = 20, label_filter: str | None = None) -> list[dict]:
     """
     하이브리드 검색 메인 함수.
 
     1. 벡터 검색 (코사인 유사도) → top-k
     2. BM25 키워드 검색 → top-k
-    3. RRF 병합 → 최종 top-k 반환
+    3. label_filter가 있으면 해당 label 청크 인덱스만 남김
+    4. RRF 병합 → 최종 top-k 반환
 
     Args:
-        query  : 검색 쿼리 (자연어)
-        top_k  : 반환할 청크 수 (기본 20)
+        query        : 검색 쿼리 (자연어)
+        top_k        : 반환할 청크 수 (기본 20)
+        label_filter : "churn" | "complaint" | "positive" | None (전체)
 
     Returns:
-        청크 dict 리스트 (id, raw_review_id, chunk_index, chunk_text, embedding 포함)
+        청크 dict 리스트 (id, raw_review_id, chunk_index, chunk_text, label 포함)
     """
     _load_chunks()
 
     vec_results = _vector_search(query, top_k=top_k)
     bm25_results = _bm25_search(query, top_k=top_k)
+
+    if label_filter:
+        allowed = {i for i, c in enumerate(_chunks_cache) if c.get("label") == label_filter}
+        vec_results = [i for i in vec_results if i in allowed]
+        bm25_results = [i for i in bm25_results if i in allowed]
+
     merged = _rrf(vec_results, bm25_results)[:top_k]
 
     return [_chunks_cache[i] for i in merged]
