@@ -24,7 +24,12 @@ logger = logging.getLogger(__name__)
 DEFAULT_RERANKER = RERANKER  # .env의 RERANKER 값 사용 (기본: albert-kor)
 
 
-def run_pipeline(query: str, reranker_name: str = DEFAULT_RERANKER, top_n: int = 5) -> list[dict]:
+def run_pipeline(
+    query: str,
+    reranker_name: str = DEFAULT_RERANKER,
+    top_n: int = 5,
+    label_filter: str | None = None,
+) -> list[dict]:
     """
     RAG 파이프라인 메인 함수.
 
@@ -36,13 +41,14 @@ def run_pipeline(query: str, reranker_name: str = DEFAULT_RERANKER, top_n: int =
         query         : 자연어 검색 쿼리
         reranker_name : 리랭커 종류 (기본: .env의 RERANKER 값)
         top_n         : 최종 반환 청크 수 (기본 5)
+        label_filter  : "churn" | "complaint" | "positive" | None (전체 대상)
 
     Returns:
         청크 dict 리스트 (id, raw_review_id, chunk_index, chunk_text 포함)
     """
-    logger.info(f"쿼리: '{query}' | 리랭커: {reranker_name}")
+    logger.info(f"쿼리: '{query}' | 리랭커: {reranker_name} | label_filter: {label_filter}")
 
-    candidates = hybrid_search(query, top_k=20)
+    candidates = hybrid_search(query, top_k=20, label_filter=label_filter)
     logger.info(f"하이브리드 검색 완료: {len(candidates)}개 후보")
 
     results = rerank(reranker_name, query, candidates, top_n=top_n)
